@@ -1,4 +1,8 @@
-#pragma once 
+#pragma once
+
+#ifdef __GNUC__
+#include <arpa/inet.h>
+#endif
 
 #include "event.h"
 #include "event2/listener.h"
