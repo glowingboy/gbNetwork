@@ -20,14 +20,14 @@ macro(gb_add_class clsName dir)
   set(header ${CMAKE_CURRENT_SOURCE_DIR}/${dir}/${clsName}.h)
 
   if(EXISTS ${src})
-    message("src@" ${src} " added")
+    message(STATUS "src@" ${src} " added")
     set(gb_server_srcs ${gb_server_srcs} ${src})
   else()
     message("src@" ${src} " not found")
   endif()
 
   if(EXISTS ${header})
-    message("header@" ${header} " added")
+    message(STATUS "header@" ${header} " added")
     set(gb_server_headers ${gb_server_headers} ${header})
   else()
     message("header@" ${header} " not found")
@@ -37,6 +37,7 @@ endmacro()
 
 gb_add_class(gbServer .)
 gb_add_class(gbSvrCore Core)
+gb_add_class(gbSvrUsr Core)
 add_executable(server
   ${gb_server_srcs} ${gb_server_headers}
   )
@@ -46,10 +47,16 @@ if(WIN32)
   set(ws2_32_lib "ws2_32.lib")
 endif()
 
+if(NOT gbUtils_LIBRARIES_d)
+  message(WARNING "gbUtilsd not found")
+  set(gbUtils_LIBRARIES_d ${gbUtils_LIBRARIES})
+endif()
+
 target_link_libraries(server
   ${libevent_LIBRARIES}
   ${lua_LIBRARIES}
-  ${gbUtils_LIBRARIES}
+  debug ${gbUtils_LIBRARIES_d}
+  optimized ${gbUtils_LIBRARIES}
   ${ws2_32_lib}
   )
 
