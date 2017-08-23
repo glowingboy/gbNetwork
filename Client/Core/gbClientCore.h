@@ -1,5 +1,96 @@
 #pragma once 
+#include <thread>
+#include <mutex>
+#include <condition_variable>
+#include <queue>
+#include "event.h"
+#include "event2/thread.h"
+#include "gbCommon.h"
+
+class gbSendPkg
+{
+public:
+
+	enum Priority
+	{
+		low = 1, mid, high
+	};
+public:
+	inline gbSendPkg(const void* _data, const size_t size, const bool bCopy, const Priority priority) :
+		_size(size),
+		_priority(priority)
+	{
+		if (bCopy)
+		{
+			data = new char[_size];
+			memcpy(data, _data, _size);
+		}
+		else
+			data = const_cast<void*>(_data);
+	}
+	inline gbSendPkg(gbSendPkg && other):
+		_size(other._size),
+		_priority(other._priority),
+		data(other.data)
+	{
+		other.data = nullptr;
+	}
+
+	inline gbSendPkg& operator=(gbSendPkg && other)
+	{
+		_size = other._size;
+		data = other.data;
+		_priority = other._priority;
+	}
+
+	inline size_t GetSize()const { return _size; }
+	inline ~gbSendPkg()
+	{
+		gbSAFE_DELETE_ARRAY(data);
+	}
+	inline bool operator<(const gbSendPkg& other)
+	{
+		return _priority < other._priority;
+	}
+	void* data;
+	
+private:
+	Priority _priority;
+	size_t _size;
+};
+
 class gbClientCore
 {
 
+public:
+	gbClientCore();
+	~gbClientCore();
+
+	static bool Initialize();
+
+	bool Connect(const char* ip, const unsigned short port);
+	bool Send(const void* msg, const size_t size);
+private:
+	event_base* _ev_base;
+	bufferevent* _bev;
+	std::thread* _work_thread;
+
+	std::thread* _dedicated_send_thread;
+	static bool _is_little_endian;
+
+	static std::mutex _sendPkgMutex;
+	static std::mutex _writableMutex;
+	static std::condition_variable _sendThread_cv;
+	static bool _writable;
+	static std::priority_queue<gbSendPkg*> _sendPkgs;
+private:
+	static void _log_callback(int severity, const char* msg);
+	static void _fatal_error_callback(int err);
+
+	static void _bufferevent_readcb(bufferevent* bev, void *ptr);
+	static void _bufferevent_writecb(struct bufferevent *bev, void *ctx);
+	static void _bufferevent_cb(bufferevent* bev, short events, void *ptr);
+
+	static void _bytes_reverse(char* d, size_t len);
+	static void _send_thread(bufferevent* bev);
 };

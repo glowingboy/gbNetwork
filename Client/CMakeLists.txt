@@ -36,14 +36,21 @@ endmacro()
 
 gb_add_class(gbClientCore Core)
 
-add_library(gbClient
+gb_add_class(test .)
+
+add_executable(gbClient
   ${gb_srcs}
   ${gb_headers}
   )
 
+# add_library(gbClient
+#   ${gb_srcs}
+#   ${gb_headers}
+#   )
+
 set(ws2_32_lib)
 if(WIN32)
-  set(ws2_32_lib "ws_32.lib")
+  set(ws2_32_lib "ws2_32.lib")
 endif()
 
 if(NOT gbUtils_LIBRARIES_d)
