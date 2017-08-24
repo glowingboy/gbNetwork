@@ -11,10 +11,6 @@ int main(int argc, char** argv)
 	int i = 0;
 	int id = ::GetTickCount();
 
-	char test[1024 * 100] = { '2' };
-	if (!c.Send(test, 1024 * 100))
-		std::cout << "error" << std::endl;
-	getchar();
 	while (true)
 	{
 		//::Sleep(10);

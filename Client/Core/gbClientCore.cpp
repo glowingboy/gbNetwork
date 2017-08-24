@@ -99,9 +99,9 @@ gbClientCore::~gbClientCore()
 
 bool gbClientCore::Connect(const char* ip, const unsigned short port)
 {
-	_bev = bufferevent_socket_new(_ev_base, -1, BEV_OPT_CLOSE_ON_FREE);
+	_bev = bufferevent_socket_new(_ev_base, -1, BEV_OPT_CLOSE_ON_FREE | BEV_OPT_THREADSAFE);
 	bufferevent_setcb(_bev, _bufferevent_readcb, _bufferevent_writecb, _bufferevent_cb, this);
-	bufferevent_enable(_bev, EV_READ | EV_WRITE);
+	bufferevent_enable(_bev, EV_READ | EV_WRITE | EV_PERSIST);
 
 	sockaddr_in sin;
 	memset(&sin, 0, sizeof(sockaddr_in));
@@ -155,6 +155,8 @@ bool gbClientCore::Send(const void* msg, const size_t size)
 			gbLog::Instance().Error(gbString("_sendPkgs.size() > 1024 size@") + _sendPkgs.size());
 			return false;
 		}
+
+		//event_add
 	}
 
 }
@@ -178,12 +180,27 @@ void gbClientCore::_send_thread(bufferevent* bev)
 			_sendPkgs.pop();
 			lck.unlock();
 
+			{
+				std::lock_guard<std::mutex> lck(_writableMutex);
+				//set writable false, before write, in case of write_cb is called after write
+				_writable = false;
+			}
 			if (bufferevent_write(bev, pkg.data, pkg.GetSize()) == -1)
 			{
 				gbLog::Instance().Error(gbString("bufferevent_write size@") + pkg.GetSize());
 				{
 					std::lock_guard<std::mutex> lck(_writableMutex);
-					_writable = false;
+					//if writable then, write_cb has been called
+					if (!_writable)
+						_writable = false;
+				}
+			}
+			else
+			{
+				{
+					std::lock_guard<std::mutex> lck(_writableMutex);
+					//set writable back to true
+					_writable = true;
 				}
 			}
 		}
