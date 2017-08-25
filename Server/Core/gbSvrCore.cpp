@@ -83,19 +83,6 @@ void gbSvrCore::Run(const unsigned int port)
 	event_base_dispatch(_base);
 }
 
-void gbSvrCore::_bytes_reverse(char* d, const size_t len)
-{
-	int m = len / 2;
-	for (int i = 0; i < m; i++)
-	{
-		char& l = d[i];
-		char& r = d[len - i - 1];
-		char tmp = l;
-		l = r;
-		r = tmp;
-	}
-}
-
 void gbSvrCore::_svr_core_thread(void* p)
 {
 	event_base_dispatch((event_base*)p);
@@ -140,14 +127,11 @@ void gbSvrCore::_read_cb(bufferevent* bev, void* ctx)
 
 	char tmp[1024] = { '\0' };
 	size_t len = bufferevent_read(bev, tmp, 1024);
-	if (_is_little_endian)
-		_bytes_reverse(tmp, len);
+
 	len = len == 1024 ? 1023 : len;
 	tmp[len] = '\0';
 	gbLog::Instance().Log(gbString("on reead:") + tmp);
-	
-	if (_is_little_endian)
-		_bytes_reverse(tmp, len);
+
 	bufferevent_write(bev, tmp, len);
 }
 

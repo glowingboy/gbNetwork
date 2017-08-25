@@ -10,6 +10,7 @@
 #endif
 
 #include "Log/gbLog.h"
+#include "gbRawData.h"
 bool gbClientCore::_is_little_endian;
 std::mutex gbClientCore::_sendPkgMutex;
 std::mutex gbClientCore::_writableMutex;
@@ -38,18 +39,6 @@ bool gbClientCore::Initialize()
 
 	return true;
 
-}
-void gbClientCore::_bytes_reverse(char* d, size_t len)
-{
-	int m = len / 2;
-	for (int i = 0; i < m; i++)
-	{
-		char& l = d[i];
-		char& r = d[len - i - 1];
-		char tmp = l;
-		l = r;
-		r = tmp;
-	}
 }
 
 gbClientCore::gbClientCore()
@@ -152,7 +141,7 @@ bool gbClientCore::Send(const void* msg, const size_t size)
 		else
 		{
 			_sendThread_cv.notify_one();
-			gbLog::Instance().Error(gbString("_sendPkgs.size() > 1024 size@") + _sendPkgs.size());
+			gbLog::Instance().Error(gbString("_sendPkgs.size() > 1024 SLOW DOWN!!! size@") + _sendPkgs.size());
 			return false;
 		}
 
@@ -185,6 +174,7 @@ void gbClientCore::_send_thread(bufferevent* bev)
 				//set writable false, before write, in case of write_cb is called after write
 				_writable = false;
 			}
+
 			if (bufferevent_write(bev, pkg.data, pkg.GetSize()) == -1)
 			{
 				gbLog::Instance().Error(gbString("bufferevent_write size@") + pkg.GetSize());
@@ -227,11 +217,17 @@ void gbClientCore::_bufferevent_readcb(bufferevent* bev, void *ptr)
 	//evbuffer* input = bufferevent_get_input(bev);
 	//while ((n = evbuffer_remove(input, buf, sizeof(buf))) > 0) {
 	//	fwrite(buf, 1, n, stdout);
+	const size_t length = evbuffer_get_length(bev->input);
+	char* buffer = new char[length];
+	gbRawDataMgr::Instance().Push(buffer, length);
 
+	//notify appPkgMgr to decode
+
+	return;
 	char tmp[1024] = { '\0' };
 	size_t len = bufferevent_read(bev, tmp, 1024);
-	if (_is_little_endian)
-		_bytes_reverse(tmp, len);
+	//if (_is_little_endian)
+	//	_bytes_reverse(tmp, len);
 	len = len == 1024 ? 1023 : len;
 	tmp[len] = '\0';
 	std::cout << "received:" << tmp << std::endl;

@@ -79,6 +79,8 @@ private:
 	std::thread* _loop_thread;
 
 	std::thread* _dedicated_send_thread;
+
+	//note!!!, each number in buffer reverse bytes order individually not reversing the whole buffer, when necessary 
 	static bool _is_little_endian;
 
 	static std::mutex _sendPkgMutex;
@@ -94,6 +96,5 @@ private:
 	static void _bufferevent_writecb(struct bufferevent *bev, void *ctx);
 	static void _bufferevent_cb(bufferevent* bev, short events, void *ptr);
 
-	static void _bytes_reverse(char* d, size_t len);
 	static void _send_thread(bufferevent* bev);
 };

@@ -15,7 +15,7 @@ int main(int argc, char** argv)
 	{
 		//::Sleep(10);
 		sprintf(inBuf, "id@%d, msg:%d\n", id, i++);
-		//std::cin >> inBuf;
+		::getchar();
 		if (!c.Send(inBuf, strlen(inBuf)))
 			std::cout << "error" << std::endl;
 	}
