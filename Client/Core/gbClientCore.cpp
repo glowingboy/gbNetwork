@@ -93,7 +93,7 @@ gbClientCore::gbClientCore()
 gbClientCore::~gbClientCore()
 {
 	event_base_free(_ev_base);
-	gbSAFE_DELETE(_work_thread);
+	gbSAFE_DELETE(_loop_thread);
 	gbSAFE_DELETE(_dedicated_send_thread);
 }
 
@@ -114,7 +114,7 @@ bool gbClientCore::Connect(const char* ip, const unsigned short port)
 	}
 
 	//sin.sin_addr.s_addr = htonl(0x7f000001);
-	sin.sin_port = htons(6666);
+	sin.sin_port = htons(port);
 
 	if (bufferevent_socket_connect(_bev, (sockaddr*)&sin, sizeof(sockaddr_in)) < 0)
 	{
@@ -122,7 +122,7 @@ bool gbClientCore::Connect(const char* ip, const unsigned short port)
 		return false;
 	}
 
-	_work_thread = new std::thread([this]()
+	_loop_thread = new std::thread([this]()
 	{
 		try
 		{
@@ -236,9 +236,6 @@ void gbClientCore::_bufferevent_readcb(bufferevent* bev, void *ptr)
 	tmp[len] = '\0';
 	std::cout << "received:" << tmp << std::endl;
 
-	if (_is_little_endian)
-		_bytes_reverse(tmp, len);
-	//bufferevent_write(bev, tmp, len);
 }
 void gbClientCore::_bufferevent_cb(bufferevent* bev, short events, void *ptr)
 {

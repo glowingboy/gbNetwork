@@ -16,6 +16,9 @@ public:
 		low = 1, mid, high
 	};
 public:
+	/**
+	@param bCopy if !Copy then use _data directly without memcpy(a feature for big file transfer?)
+	*/
 	inline gbSendPkg(const void* _data, const size_t size, const bool bCopy, const Priority priority) :
 		_size(size),
 		_priority(priority)
@@ -73,7 +76,7 @@ public:
 private:
 	event_base* _ev_base;
 	bufferevent* _bev;
-	std::thread* _work_thread;
+	std::thread* _loop_thread;
 
 	std::thread* _dedicated_send_thread;
 	static bool _is_little_endian;
