@@ -17,6 +17,9 @@ public:
 		gbSAFE_DELETE_ARRAY(_data);
 	}
 
+	inline void* Data() { return _data; }
+	inline size_t Length() { return _len; }
+
 private:
 	void* _data;
 	const size_t _len;

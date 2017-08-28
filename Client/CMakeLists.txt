@@ -37,7 +37,7 @@ endmacro()
 gb_add_class(gbClientCore Core)
 gb_add_class(gbRawData .)
 gb_add_class(gbAppPkg .)
-gb_add_class(gbLNByte ..)
+gb_add_class(gbByteOrderAmend ..)
 
 gb_add_class(test .)
 

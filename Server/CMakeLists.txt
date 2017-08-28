@@ -40,7 +40,7 @@ endmacro()
 gb_add_class(gbServer .)
 gb_add_class(gbSvrCore Core)
 gb_add_class(gbSvrUsr Core)
-gb_add_class(gbLNByte ..)
+gb_add_class(gbByteOrderAmend ..)
 
 add_executable(server
   ${gb_server_srcs} ${gb_server_headers}
