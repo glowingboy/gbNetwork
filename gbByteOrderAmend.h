@@ -1,6 +1,6 @@
 #pragma once 
 #include <stdlib.h>
-#define gb_BOA_SWAP
+//#define gb_BOA_SWAP
 
 #ifdef gb_BOA_SWAP
 #ifdef _MSC_VER
@@ -12,8 +12,8 @@
 #define gb_BOA_int32(val) __builtin_bswap32(val);
 #define gb_BOA_int64(val) __builtin_bswap64(val);
 #endif
-#elif
-gb_BOA_int16(val) val
-gb_BOA_int16(val) val
-gb_BOA_int16(val) val
+#else
+#define gb_BOA_int16(val) val
+#define gb_BOA_int32(val) val
+#define gb_BOA_int64(val) val
 #endif

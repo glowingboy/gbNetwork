@@ -10,7 +10,7 @@
 #endif
 
 #include "Log/gbLog.h"
-#include "gbRawData.h"
+#include "../gbRawData.h"
 bool gbClientCore::_is_little_endian;
 std::mutex gbClientCore::_sendPkgMutex;
 std::mutex gbClientCore::_writableMutex;
@@ -218,7 +218,10 @@ void gbClientCore::_bufferevent_readcb(bufferevent* bev, void *ptr)
 	//while ((n = evbuffer_remove(input, buf, sizeof(buf))) > 0) {
 	//	fwrite(buf, 1, n, stdout);
 	const size_t length = evbuffer_get_length(bev->input);
-	char* buffer = new char[length];
+
+	//release after decoded
+	unsigned char* buffer = new unsigned char[length];
+	bufferevent_read(bev, buffer, length);
 	gbRawDataMgr::Instance().Push(buffer, length);
 
 	//notify appPkgMgr to decode

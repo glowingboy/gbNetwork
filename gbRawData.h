@@ -2,12 +2,13 @@
 #include "gbCommon.h"
 #include <mutex>
 #include <queue>
+#include <thread>
 #include <condition_variable>
 
 class gbRawData
 {
 public:
-	inline gbRawData(void* data, const size_t len):
+	inline gbRawData(unsigned char* data, const size_t len):
 		_data(data),
 		_len(len)
 	{}
@@ -16,25 +17,28 @@ public:
 	{
 		gbSAFE_DELETE_ARRAY(_data);
 	}
-
-	inline void* Data() { return _data; }
+	inline void ReleaseBuffer() { gbSAFE_DELETE_ARRAY(_data);}
+	inline unsigned char* Data() { return _data; }
 	inline size_t Length() { return _len; }
 
 private:
-	void* _data;
+	unsigned char* _data;
 	const size_t _len;
 };
 
 class gbRawDataMgr
 {
-	SingletonDeclare(gbRawDataMgr)
-public:
-	void Push(void* data, const size_t len);
-	//gbRawData* Pop();
+	SingletonDeclare_ExcludeDfnCnstrctor(gbRawDataMgr);
 private:
+	gbRawDataMgr();
+public:
+	void Push(unsigned char* data, const size_t len);
+	gbRawData* Pop();
+private:
+	std::thread* _workThread;
 	std::mutex _mtx;
 	std::condition_variable _cv;
 	std::queue<gbRawData*> _qRD;
 private:
-	static void _rawData2AppPkg();
+	//static void _rawData2AppPkg();
 };

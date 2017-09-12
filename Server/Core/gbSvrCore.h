@@ -11,12 +11,14 @@ class gbSvrCore
 public:
 	static bool Initialize();
 	static void Run(const unsigned int port);
+	static void Shutdown();
 private:
 	static event_base* _base;
 	static evconnlistener* _listener;
 
-	//note!!!, each number in buffer reverse bytes order individually not reversing the whole buffer, when necessary 
+	//note!!!, reversing each number  bytes order in bufffer individually not reversing the whole buffer one time, when necessary 
 	static bool _is_little_endian;
+	static std::thread* _logicLoopThread;
 private:
 	static void _accept_conn_cb(evconnlistener* listener, evutil_socket_t fd, sockaddr* address, int socklen, void* ctx);
 	static void _accept_error_cb(evconnlistener* listerner, void*ctx);

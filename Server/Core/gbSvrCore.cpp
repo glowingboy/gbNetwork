@@ -8,6 +8,9 @@
 #include "Log/gbLog.h"
 #include "String/gbString.h"
 #include "ThreadPool/gbThreadPool.h"
+#include "../gbRawData.h"
+#include "gbSvrLogicLoop.h"
+#include "LuaCPP/gbLuaCPP.h"
 event_base* gbSvrCore::_base;
 evconnlistener* gbSvrCore::_listener;
 bool gbSvrCore::_is_little_endian;
@@ -61,7 +64,30 @@ bool gbSvrCore::Initialize()
 	int t = 1;
 	_is_little_endian = ((char*)&t)[0];
 
+	//logic loop
+	_logicLoopThread = new std::thread(gbSvrLogicLoop::Loop);
+
+	//load lua script 
+	lua_pushcfunction(L, gbLuaTraceback);
+	if (luaL_loadfile(L, luaFile) != 0)
+	{
+		printf("luaL_loadfile error:%s\n", lua_tostring(L, -1));
+		return false;
+	}
+	else
+	{
+		return lua_pcall(L, 0, 0, -2) == 0 ? true : false;
+	}
+
+
 	return _base == nullptr ? false : true;
+}
+
+void gbSvrCore::Shutdown()
+{
+	event_base_free(_base);
+
+	gbSAFE_DELETE(_logicLoopThread);
 }
 
 void gbSvrCore::Run(const unsigned int port)
@@ -124,6 +150,13 @@ void gbSvrCore::_read_cb(bufferevent* bev, void* ctx)
 	//evbuffer* output = bufferevent_get_output(bev);
 
 	//evbuffer_add_buffer(output, input);
+
+	const size_t length = evbuffer_get_length(bev->input);
+	//release after decoded
+	unsigned char* buffer = new unsigned char[length];
+	bufferevent_read(bev, buffer, length);
+	gbRawDataMgr::Instance().Push(buffer, length);
+	return;
 
 	char tmp[1024] = { '\0' };
 	size_t len = bufferevent_read(bev, tmp, 1024);
