@@ -37,7 +37,7 @@ public:
 private:
 	std::thread* _workThread;
 	std::mutex _mtx;
-	std::condition_variable _cv;
+	//std::condition_variable _cv;
 	std::queue<gbRawData*> _qRD;
 private:
 	//static void _rawData2AppPkg();

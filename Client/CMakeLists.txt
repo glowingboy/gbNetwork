@@ -9,6 +9,9 @@ include_directories(SYSTEM ${libevent_INCLUDE_DIRS})
 find_package(gbUtils REQUIRED)
 include_directories(SYSTEM ${gbUtils_INCLUDE_DIRS})
 
+find_package(lua REQUIRED)
+include_directories(SYSTEM ${lua_INCLUDE_DIRS})
+
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 
 set(gb_srcs)
@@ -64,6 +67,7 @@ endif()
 
 target_link_libraries(gbClient
   ${libevent_LIBRARIES}
+  ${lua_LIBRARIES}
   debug ${gbUtils_LIBRARIES_d}
   optimized ${gbUtils_LIBRARIES}
   ${ws2_32_lib}

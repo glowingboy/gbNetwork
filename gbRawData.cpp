@@ -1,6 +1,6 @@
 #include "gbRawData.h"
 #include "gbAppPkg.h"
-
+#include "ThreadPool/gbThreadPool.h"
 gbRawDataMgr::gbRawDataMgr()
 {
 	//_workThread = new std::thread(_rawData2AppPkg);
@@ -15,7 +15,8 @@ void gbRawDataMgr::Push(unsigned char* data, const size_t len)
 		_qRD.push(new gbRawData(data, len));
 	}
 
-	_cv.notify_one();
+	gbThreadPool::Instance().PushTask(gbTask(gbAppPkgMgr::HandleRawData, nullptr));
+	//_cv.notify_one();
 }
 
 gbRawData* gbRawDataMgr::Pop()
@@ -29,7 +30,6 @@ gbRawData* gbRawDataMgr::Pop()
 	}
 	else
 		return nullptr;
-
 }
 
 //void gbRawDataMgr::_rawData2AppPkg()
@@ -38,7 +38,6 @@ gbRawData* gbRawDataMgr::Pop()
 //	while (true)
 //	{
 //		std::unique_lock<std::mutex> lck(mgr._mtx);
-//		gbRawData* rd(nullptr);
 //		if (!mgr._qRD.empty())
 //		{
 //			gbRawData* rd = mgr._qRD.front();
@@ -46,7 +45,7 @@ gbRawData* gbRawDataMgr::Pop()
 //			lck.unlock();
 //			
 //			gbAppPkgMgr::Instance().Decode(rd);
-//			rd->ReleaseBuffer();
+//			//rd->ReleaseBuffer();
 //		}
 //		else
 //			mgr._cv.wait(lck);

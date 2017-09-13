@@ -14,6 +14,7 @@
 event_base* gbSvrCore::_base;
 evconnlistener* gbSvrCore::_listener;
 bool gbSvrCore::_is_little_endian;
+std::thread* gbSvrCore::_logicLoopThread;
 bool gbSvrCore::Initialize()
 {
 #ifdef WIN32
@@ -59,7 +60,8 @@ bool gbSvrCore::Initialize()
 
 
 	_base = event_base_new();
-
+	if (_base == nullptr)
+		return false;
 	//check endian
 	int t = 1;
 	_is_little_endian = ((char*)&t)[0];
@@ -68,25 +70,17 @@ bool gbSvrCore::Initialize()
 	_logicLoopThread = new std::thread(gbSvrLogicLoop::Loop);
 
 	//load lua script 
-	lua_pushcfunction(L, gbLuaTraceback);
-	if (luaL_loadfile(L, luaFile) != 0)
-	{
-		printf("luaL_loadfile error:%s\n", lua_tostring(L, -1));
+	if (gbLuaCPP_init() == nullptr)
 		return false;
-	}
-	else
-	{
-		return lua_pcall(L, 0, 0, -2) == 0 ? true : false;
-	}
 
+	if (!gbLuaCPP_dofile("Script/gbSvrCore.lua"))
+		return false;
 
-	return _base == nullptr ? false : true;
+	return true;
 }
 
 void gbSvrCore::Shutdown()
 {
-	event_base_free(_base);
-
 	gbSAFE_DELETE(_logicLoopThread);
 }
 
@@ -107,11 +101,13 @@ void gbSvrCore::Run(const unsigned int port)
 	}
 	evconnlistener_set_error_cb(_listener, _accept_error_cb);
 	event_base_dispatch(_base);
+	event_base_free(_base);
 }
 
 void gbSvrCore::_svr_core_thread(void* p)
 {
 	event_base_dispatch((event_base*)p);
+	event_base_free((event_base*)p);
 }
 void gbSvrCore::_accept_conn_cb(evconnlistener* listener, evutil_socket_t fd, sockaddr* address, int socklen, void* ctx)
 {

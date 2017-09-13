@@ -35,8 +35,10 @@ class gbAppPkgMgr
 
 public:
 	//@param maxCount, if maxCount == -1, then drain out the rawData queue
-	void HandleRawData(const unsigned int maxCount);
+	static void HandleRawData(void* p);
+	void _handleRawData(const unsigned int maxCount);
 	void Decode(gbRawData* rd);
+	void Encode(const char* szData, const unsigned char type, unsigned char*& rawData, size_t & rdSize);
 private:
 	std::vector<unsigned char> _vRemainderPkg;
 	//std::queue<gbAppPkg*> _qAppPkgs;//todo, priority queue?

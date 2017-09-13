@@ -19,17 +19,17 @@ public:
 	/**
 	@param bCopy if !Copy then use _data directly without memcpy(a feature for big file transfer?)
 	*/
-	inline gbSendPkg(const void* _data, const size_t size, const bool bCopy, const Priority priority) :
+	inline gbSendPkg(const unsigned char* _data, const size_t size, const bool bCopy, const Priority priority) :
 		_size(size),
 		_priority(priority)
 	{
 		if (bCopy)
 		{
-			data = new char[_size];
+			data = new unsigned char[_size];
 			memcpy(data, _data, _size);
 		}
 		else
-			data = const_cast<void*>(_data);
+			data = const_cast<unsigned char*>(_data);
 	}
 	inline gbSendPkg(gbSendPkg && other):
 		_size(other._size),
@@ -55,7 +55,7 @@ public:
 	{
 		return _priority < other._priority;
 	}
-	void* data;
+	unsigned char* data;
 	
 private:
 	Priority _priority;
@@ -72,7 +72,8 @@ public:
 	static bool Initialize();
 
 	bool Connect(const char* ip, const unsigned short port);
-	bool Send(const void* msg, const size_t size);
+	bool Send(const unsigned char* msg, const size_t size);
+	bool Send(gbSendPkg* pkg);
 private:
 	event_base* _ev_base;
 	bufferevent* _bev;

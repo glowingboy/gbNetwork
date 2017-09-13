@@ -1,11 +1,30 @@
 print("loading gbSvrCore")
 
---local gbAccountMgrPath = "../AccMgr/?.lua"
+local scriptPath = "Script/?.lua"
 
---package.path = string.format("%s;%s", package.path, gbAccountMgrPath)
+package.path = string.format("%s;%s", package.path, scriptPath)
 
-gbAccMgr = require(gbAccMgr)
+gbAccMgr = require("gbAccMgr")
 
-gbAccMgr:Signup("gb", 123)
+if gbAccMgr:Signup("gb", 123) then
+   print("signup ok")
+else
+   print("signup err")
+end
+
+if gbAccMgr:Signup("gb", 123) then
+   print("signup ok")
+else
+   print("signup err")
+end
+
+
+if gbAccMgr:Login("gb", 123) then
+   print("login ok")
+else
+   print("login err")
+end
+
+
 
 

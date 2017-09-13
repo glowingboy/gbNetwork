@@ -4,6 +4,6 @@ void gbSvrLogicLoop::Loop()
 {
 	while (true)
 	{
-		gbAppPkgMgr::Instance().HandleRawData(-1);
+		//gbAppPkgMgr::Instance().HandleRawData(-1);
 	}
 }

@@ -4,7 +4,7 @@
 #include "event2/listener.h"
 #include "event2/thread.h"
 #include "gbCommon.h"
-
+#include <thread>
 
 class gbSvrCore
 {

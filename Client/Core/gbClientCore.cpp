@@ -124,7 +124,7 @@ bool gbClientCore::Connect(const char* ip, const unsigned short port)
 	});
 }
 
-bool gbClientCore::Send(const void* msg, const size_t size)
+bool gbClientCore::Send(const unsigned char* msg, const size_t size)
 {
 	//if (_is_little_endian)
 	//	_bytes_reverse(const_cast<char*>((const char*)msg), size);
@@ -148,6 +148,27 @@ bool gbClientCore::Send(const void* msg, const size_t size)
 		//event_add
 	}
 
+}
+
+bool gbClientCore::Send(gbSendPkg* pkg)
+{
+	{
+		std::lock_guard<std::mutex> lck(_sendPkgMutex);
+		if (_sendPkgs.size() < 1024)
+		{
+			_sendPkgs.push(pkg);
+			_sendThread_cv.notify_one();
+			return true;
+		}
+		else
+		{
+			_sendThread_cv.notify_one();
+			gbLog::Instance().Error(gbString("_sendPkgs.size() > 1024 SLOW DOWN!!! size@") + _sendPkgs.size());
+			return false;
+		}
+
+		//event_add
+	}
 }
 void gbClientCore::_bufferevent_writecb(struct bufferevent *bev, void *ctx)
 {

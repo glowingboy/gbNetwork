@@ -19,10 +19,24 @@ void gbAppPkg::Handle(unsigned char* data, const appPkgLen len)
 	}
 	else if (type == 'X')
 	{
-		
+		lua_State* l = lua_newthread(gbLuaState);
+
+		gbLuaCPP_dostring((const char*)(data + 1));
+
 	}
 }
-void gbAppPkgMgr::HandleRawData(const unsigned int maxCount)
+
+void gbAppPkgMgr::Encode(const char* szData, const unsigned char type, unsigned char*& rawData, size_t & rdSize)
+{
+	const appPkgLen len = strlen(szData) + 1;
+	rdSize = len + 4 + 1;
+	rawData = new unsigned char[rdSize];
+	*(appPkgLen*)rawData = len;
+	*(rawData + 4) = type;
+	memcpy(rawData + 4 + 1, szData, len);
+}
+
+void gbAppPkgMgr::_handleRawData(const unsigned int maxCount)
 {
 	unsigned int curCount = 0;
 	while (true)
@@ -31,13 +45,19 @@ void gbAppPkgMgr::HandleRawData(const unsigned int maxCount)
 		if (rData == nullptr)
 			break;
 		Decode(rData);
-		rData->ReleaseBuffer();
+		//rData->ReleaseBuffer();
 		curCount++;
 		if (curCount == maxCount)
 			break;
 	}
 	
 }
+
+void gbAppPkgMgr::HandleRawData(void* p)
+{
+	gbAppPkgMgr::Instance()._handleRawData(-1);
+}
+
 void gbAppPkgMgr::Decode(gbRawData* rd)
 {
 	unsigned char* data = (unsigned char*)(rd->Data());
@@ -68,4 +88,6 @@ void gbAppPkgMgr::Decode(gbRawData* rd)
 			break;
 		}
 	}
+
+	rd->ReleaseBuffer();
 }
