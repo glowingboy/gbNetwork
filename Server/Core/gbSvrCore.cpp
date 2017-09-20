@@ -8,13 +8,18 @@
 #include "Log/gbLog.h"
 #include "String/gbString.h"
 #include "ThreadPool/gbThreadPool.h"
-#include "../gbRawData.h"
+
 #include "gbSvrLogicLoop.h"
 #include "LuaCPP/gbLuaCPP.h"
+
 event_base* gbSvrCore::_base;
 evconnlistener* gbSvrCore::_listener;
 bool gbSvrCore::_is_little_endian;
 std::thread* gbSvrCore::_logicLoopThread;
+lua_State* gbSvrCore::_L;
+unsigned char gbSvrCore::_recvBuffer[gb_UDP_MAX_PACKET_SIZE] = {0};
+evutil_socket_t gbSvrCore::_sockfd;
+event* gbSvrCore::_ev;
 bool gbSvrCore::Initialize()
 {
 #ifdef WIN32
@@ -69,23 +74,55 @@ bool gbSvrCore::Initialize()
 	//logic loop
 	_logicLoopThread = new std::thread(gbSvrLogicLoop::Loop);
 
-	//load lua script 
-	if (gbLuaCPP_init() == nullptr)
+	//load lua script
+	_L = gbLuaCPP_init();
+	if (_L == nullptr)
 		return false;
 
-	if (!gbLuaCPP_dofile("Script/gbSvrCore.lua"))
-		return false;
+//	if (!gbLuaCPP_dofile(_L, "Script/gbSvrCore.lua"))
+//	    return false;
 
 	return true;
 }
 
 void gbSvrCore::Shutdown()
 {
-	gbSAFE_DELETE(_logicLoopThread);
+//    ::close(_sockfd);
+    event_free(_ev);
+    gbSAFE_DELETE(_logicLoopThread);
 }
 
-void gbSvrCore::Run(const unsigned int port)
+void gbSvrCore::Run(const char* port)
 {
+#ifdef __GNUC__
+    addrinfo hints, *svrinfo;
+    ::memset(&hints, 0, sizeof(hints));
+    hints.ai_family = AF_INET;
+    hints.ai_socktype = SOCK_DGRAM;
+    hints.ai_flags = AI_PASSIVE;
+    int ret = ::getaddrinfo(NULL, port, &hints, &svrinfo);
+    if(ret != 0)
+    {
+	gbLog::Instance().Error((gbString)"getaddrinfo err@" + strerror(errno));
+	return;
+    }
+    _sockfd = socket(svrinfo->ai_family, svrinfo->ai_socktype, svrinfo->ai_protocol);
+    if(_sockfd == -1)
+    {
+	gbLog::Instance().Error(gbString("sockfd create err@") + strerror(errno));
+	return;
+    }
+
+    if(bind(_sockfd, svrinfo->ai_addr, svrinfo->ai_addrlen) == -1)
+    {
+	gbLog::Instance().Error(gbString("bind err@") + strerror(errno));
+	return;
+    }
+
+    _ev = event_new(_base, _sockfd, EV_READ | EV_WRITE | EV_PERSIST | EV_ET, _ev_cb, NULL);
+    event_add(_ev, NULL);
+    
+#elif _MSC_VER
 	sockaddr_in sin;
 
 	memset(&sin, 0, sizeof(sin));
@@ -100,44 +137,68 @@ void gbSvrCore::Run(const unsigned int port)
 		return;
 	}
 	evconnlistener_set_error_cb(_listener, _accept_error_cb);
+#endif
+
 	event_base_dispatch(_base);
 	event_base_free(_base);
+	
 }
 
+void gbSvrCore::_ev_cb(evutil_socket_t fd, short what, void* arg)
+{
+    if(what & EV_READ)
+    {
+	size_t len = recvfrom(fd, _recvBuffer, 512, 0, NULL, NULL);
+	if(len != -1)
+	{
+	    unsigned char* rBuf = new unsigned char[len];
+	    //release after decoded
+	    memcpy(rBuf, _recvBuffer, len);
+	
+	    gbRawDataMgr::Instance().Push(rBuf, len);
+	}
+	else
+	    gbLog::Instance().Error((gbString)"recvfrom err@" + strerror(errno));
+    }
+    else if (what & EV_WRITE)
+    {
+	gbLog::Instance().Log("EV_WRITE");
+    }
+}
 void gbSvrCore::_svr_core_thread(void* p)
 {
 	event_base_dispatch((event_base*)p);
 	event_base_free((event_base*)p);
 }
-void gbSvrCore::_accept_conn_cb(evconnlistener* listener, evutil_socket_t fd, sockaddr* address, int socklen, void* ctx)
-{
-	sockaddr_in* addr = (sockaddr_in*)address;
-	char strAddr[64] = { '\0' };
-	inet_ntop(AF_INET, &(addr->sin_addr), (PSTR)strAddr, 64);
-	gbLog::Instance().Log(gbString("on connected@ ") + strAddr);
+// void gbSvrCore::_accept_conn_cb(evconnlistener* listener, evutil_socket_t fd, sockaddr* address, int socklen, void* ctx)
+// {
+// 	sockaddr_in* addr = (sockaddr_in*)address;
+// 	char strAddr[64] = { '\0' };
+// 	inet_ntop(AF_INET, &(addr->sin_addr), (PSTR)strAddr, 64);
+// 	gbLog::Instance().Log(gbString("on connected@ ") + strAddr);
 
-	//event_base* base = evconnlistener_get_base(listener);
+// 	//event_base* base = evconnlistener_get_base(listener);
 
-	event_base* base = event_base_new();
-	if (base != nullptr)
-	{
-		bufferevent* bev = bufferevent_socket_new(base, fd, BEV_OPT_CLOSE_ON_FREE);
-		bufferevent_setcb(bev, _read_cb, NULL, _event_cb, NULL);
-		bufferevent_enable(bev, EV_READ | EV_WRITE);
-		gbThreadPool::Instance().PushTask(gbTask(_svr_core_thread, base));
-	}
-	else
-		gbLog::Instance().Error("event_base_new error");
+// 	event_base* base = event_base_new();
+// 	if (base != nullptr)
+// 	{
+// 		bufferevent* bev = bufferevent_socket_new(base, fd, BEV_OPT_CLOSE_ON_FREE);
+// 		bufferevent_setcb(bev, _read_cb, NULL, _event_cb, NULL);
+// 		bufferevent_enable(bev, EV_READ | EV_WRITE);
+// 		gbThreadPool::Instance().PushTask(gbTask(_svr_core_thread, base));
+// 	}
+// 	else
+// 		gbLog::Instance().Error("event_base_new error");
 
-}
+// }
 
-void gbSvrCore::_accept_error_cb(evconnlistener* listerner, void*ctx)
-{
-	event_base* base = evconnlistener_get_base(listerner);
-	int err = EVUTIL_SOCKET_ERROR();
-	gbLog::Instance().Error(gbString("error on listener: ") + evutil_socket_error_to_string(err));
-	event_base_loopexit(base, NULL);
-}
+// void gbSvrCore::_accept_error_cb(evconnlistener* listerner, void*ctx)
+// {
+// 	event_base* base = evconnlistener_get_base(listerner);
+// 	int err = EVUTIL_SOCKET_ERROR();
+// 	gbLog::Instance().Error(gbString("error on listener: ") + evutil_socket_error_to_string(err));
+// 	event_base_loopexit(base, NULL);
+// }
 
 void gbSvrCore::_read_cb(bufferevent* bev, void* ctx)
 {

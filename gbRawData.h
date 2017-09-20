@@ -5,6 +5,8 @@
 #include <thread>
 #include <condition_variable>
 
+#define gb_UDP_MAX_PACKET_SIZE 512
+
 class gbRawData
 {
 public:

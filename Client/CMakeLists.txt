@@ -1,4 +1,9 @@
 cmake_minimum_required(VERSION 3.0)
+
+if(NOT CMAKE_BUILD_TYPE)
+  set(CMAKE_BUILD_TYPE "Debug")
+endif()
+
 set(CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS} "-std=c++11")
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/CMake/")
@@ -60,6 +65,11 @@ if(WIN32)
   set(ws2_32_lib "ws2_32.lib")
 endif()
 
+set(pthread_lib)
+if(UNIX)
+  set(pthread_lib "pthread")
+endif()
+
 if(NOT gbUtils_LIBRARIES_d)
   message(WARNING "gbUtilsd not found")
   set(gbUtils_LIBRARIES_d ${gbUtils_LIBRARIES})
@@ -67,8 +77,9 @@ endif()
 
 target_link_libraries(gbClient
   ${libevent_LIBRARIES}
-  ${lua_LIBRARIES}
   debug ${gbUtils_LIBRARIES_d}
   optimized ${gbUtils_LIBRARIES}
+  ${lua_LIBRARIES}
   ${ws2_32_lib}
+  ${pthread_lib}
   )

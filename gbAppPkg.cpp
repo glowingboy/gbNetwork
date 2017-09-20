@@ -3,6 +3,7 @@
 #include "../gbByteOrderAmend.h"
 #include <algorithm>
 #include "LuaCPP/gbLuaCPP.h"
+#include "Log/gbLog.h"
 //gbAppPkg::gbAppPkg(unsigned char* data, const appPkgLen len):
 //	_type(*data)
 //{
@@ -19,21 +20,23 @@ void gbAppPkg::Handle(unsigned char* data, const appPkgLen len)
 	}
 	else if (type == 'X')
 	{
-		lua_State* l = lua_newthread(gbLuaState);
-
-		gbLuaCPP_dostring((const char*)(data + 1));
-
+	    gbLog::Instance().Log((char*)data);
+	    //lua_State* l = lua_newthread(gbLuaState);
+	    
+	    //gbLuaCPP_dostring((const char*)(data + 1));
+		
 	}
 }
 
 void gbAppPkgMgr::Encode(const char* szData, const unsigned char type, unsigned char*& rawData, size_t & rdSize)
 {
-	const appPkgLen len = strlen(szData) + 1;
-	rdSize = len + 4 + 1;
-	rawData = new unsigned char[rdSize];
-	*(appPkgLen*)rawData = len;
-	*(rawData + 4) = type;
-	memcpy(rawData + 4 + 1, szData, len);
+    //+1 for string's terminator '\0'
+    const appPkgLen len = strlen(szData) + 1;
+    rdSize = len + 4 + 1;
+    rawData = new unsigned char[rdSize];
+    *(appPkgLen*)rawData = len;
+    *(rawData + 4) = type;
+    memcpy(rawData + 4 + 1, szData, len);
 }
 
 void gbAppPkgMgr::_handleRawData(const unsigned int maxCount)
@@ -72,7 +75,7 @@ void gbAppPkgMgr::Decode(gbRawData* rd)
 	while (true)
 	{
 		appPkgLen len = gb_BOA_int32(*(appPkgLen*)data);
-		const size_t size = len + gb_APPPKG_LEN_SIZE;
+		const size_t size = len + gb_APPPKG_LEN_SIZE + 1;
 		if (size <= rdLen)
 		{
 			gbAppPkg::Handle(data + gb_APPPKG_LEN_SIZE, len);
