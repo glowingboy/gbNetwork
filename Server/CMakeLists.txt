@@ -45,7 +45,7 @@ gb_add_class(gbServer .)
 gb_add_class(gbSvrCore Core)
 gb_add_class(gbSvrUsr Core)
 gb_add_class(gbByteOrderAmend ..)
-gb_add_class(gbRawData ..)
+gb_add_class(gbUDPData ..)
 gb_add_class(gbAppPkg .. )
 gb_add_class(gbSvrLogicLoop .)
 add_executable(server

@@ -7,6 +7,7 @@
 #include <thread>
 #include "LuaCPP/gbLuaCPP.h"
 #include "../gbRawData.h"
+#include "String/gbString.h"
 class gbSvrCore
 {
 public:
@@ -25,11 +26,12 @@ private:
     static unsigned char _recvBuffer[gb_UDP_MAX_PACKET_SIZE];
     static evutil_socket_t _sockfd;
     static event* _ev;
+    static gbString _workPath;
 private:
 //    static void _accept_conn_cb(evconnlistener* listener, evutil_socket_t fd, sockaddr* address, int socklen, void* ctx);
 //    static void _accept_error_cb(evconnlistener* listerner, void*ctx);
-    static void _read_cb(bufferevent* bev, void* ctx);
-    static void _event_cb(bufferevent* bev, short events, void* ctx);
+    // static void _read_cb(bufferevent* bev, void* ctx);
+    // static void _event_cb(bufferevent* bev, short events, void* ctx);
     static void _log_callback(int severity, const char* msg);
     static void _fatal_error_callback(int err);
 

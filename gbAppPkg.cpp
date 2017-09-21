@@ -1,5 +1,5 @@
 #include "gbAppPkg.h"
-#include "gbRawData.h"
+#include "gbUDPData.h"
 #include "../gbByteOrderAmend.h"
 #include <algorithm>
 #include "LuaCPP/gbLuaCPP.h"
@@ -11,21 +11,40 @@
 //	memcpy(_szData, data + 1, len - 1);
 //	_szData[len - 1] = '\0';
 //}
-void gbAppPkg::Handle(unsigned char* data, const appPkgLen len)
-{
-	const unsigned char type = *data;
-	if (type == 'S')
-	{
+// void gbAppPkg::Handle(unsigned char* data, const appPkgLen len)
+// {
+//     const unsigned char type = *data;
+//     if (type == 'S')
+//     {
 
-	}
-	else if (type == 'X')
-	{
-	    gbLog::Instance().Log((char*)data);
-	    //lua_State* l = lua_newthread(gbLuaState);
+//     }
+//     else if (type == 'X')
+//     {
+// 	gbLog::Instance().Log((char*)data);
+// 	//lua_State* l = lua_newthread(gbLuaState);
 	    
-	    //gbLuaCPP_dostring((const char*)(data + 1));
+// 	//gbLuaCPP_dostring((const char*)(data + 1));
 		
-	}
+//     }
+// }
+
+void gbAppPkg::Handle(gbUDPData* ud)
+{
+    const unsigned char* data = ud->Data();
+    const unsigned char type = *(data);
+    if (type == 'S')
+    {
+
+    }
+    else if (type == 'X')
+    {
+	gbLog::Instance().Log((char*)data);
+	//lua_State* l = lua_newthread(gbLuaState);
+	    
+
+	//gbLuaCPP_dostring((const char*)(data + 1));
+
+    }
 }
 
 void gbAppPkgMgr::Encode(const char* szData, const unsigned char type, unsigned char*& rawData, size_t & rdSize)
@@ -39,58 +58,63 @@ void gbAppPkgMgr::Encode(const char* szData, const unsigned char type, unsigned 
     memcpy(rawData + 4 + 1, szData, len);
 }
 
-void gbAppPkgMgr::_handleRawData(const unsigned int maxCount)
+void gbAppPkgMgr::_handleUDPData(const unsigned int maxCount)
 {
-	unsigned int curCount = 0;
-	while (true)
-	{
-		gbRawData* rData = gbRawDataMgr::Instance().Pop();
-		if (rData == nullptr)
-			break;
-		Decode(rData);
-		//rData->ReleaseBuffer();
-		curCount++;
-		if (curCount == maxCount)
-			break;
-	}
+    unsigned int curCount = 0;
+    while (true)
+    {
+	gbUDPData* rData = gbUDPDataMgr::Instance().Pop();
+	if (rData == nullptr)
+	    break;
+	gbAppPkg::Handle(rData);
+//	Decode(rData);
+	//rData->ReleaseBuffer();
+	curCount++;
+	if (curCount == maxCount)
+	    break;
+    }
 	
 }
 
-void gbAppPkgMgr::HandleRawData(void* p)
+void gbAppPkgMgr::HandleUDPData(void* p)
 {
-	gbAppPkgMgr::Instance()._handleRawData(-1);
+    gbAppPkgMgr::Instance()._handleUDPData(-1);
 }
 
-void gbAppPkgMgr::Decode(gbRawData* rd)
+void Decode_udp(gbUDPData* ud)
 {
-	unsigned char* data = (unsigned char*)(rd->Data());
-	size_t rdLen = rd->Length();
-	if (_vRemainderPkg.size() != 0)
-	{
-		_vRemainderPkg.insert(_vRemainderPkg.end(), data, data + rdLen);
-		data = _vRemainderPkg.data();
-		rdLen = _vRemainderPkg.size();
-	}
+//	    gbAppPkg::Handle(data + gb_APPPKG_LEN_SIZE, len);
+}
+// void gbAppPkgMgr::Decode(gbUDPData* rd)
+// {
+//     unsigned char* data = (unsigned char*)(rd->Data());
+//     size_t rdLen = rd->Length();
+//     if (_vRemainderPkg.size() != 0)
+//     {
+// 	_vRemainderPkg.insert(_vRemainderPkg.end(), data, data + rdLen);
+// 	data = _vRemainderPkg.data();
+// 	rdLen = _vRemainderPkg.size();
+//     }
 	
-	while (true)
-	{
-		appPkgLen len = gb_BOA_int32(*(appPkgLen*)data);
-		const size_t size = len + gb_APPPKG_LEN_SIZE + 1;
-		if (size <= rdLen)
-		{
-			gbAppPkg::Handle(data + gb_APPPKG_LEN_SIZE, len);
-			//_qAppPkgs.push(new gbAppPkg(data + gb_APPPKG_LEN_SIZE, len));
-			data += size;
-			rdLen = rdLen - size;
-			if (rdLen == 0)
-				break;
-		}
-		else
-		{
-			_vRemainderPkg.insert(_vRemainderPkg.end(), data, data + rdLen);
-			break;
-		}
-	}
+//     while (true)
+//     {
+// 	appPkgLen len = gb_BOA_int32(*(appPkgLen*)data);
+// 	const size_t size = len + gb_APPPKG_LEN_SIZE + 1;
+// 	if (size <= rdLen)
+// 	{
+// 	    gbAppPkg::Handle(data + gb_APPPKG_LEN_SIZE, len);
+// 	    //_qAppPkgs.push(new gbAppPkg(data + gb_APPPKG_LEN_SIZE, len));
+// 	    data += size;
+// 	    rdLen = rdLen - size;
+// 	    if (rdLen == 0)
+// 		break;
+// 	}
+// 	else
+// 	{
+// 	    _vRemainderPkg.insert(_vRemainderPkg.end(), data, data + rdLen);
+// 	    break;
+// 	}
+//     }
 
-	rd->ReleaseBuffer();
-}
+//     rd->ReleaseBuffer();
+// }

@@ -43,7 +43,7 @@ macro(gb_add_class clsName dir)
 endmacro()
 
 gb_add_class(gbClientCore Core)
-gb_add_class(gbRawData ..)
+gb_add_class(gbUDPData ..)
 gb_add_class(gbAppPkg ..)
 gb_add_class(gbByteOrderAmend ..)
 

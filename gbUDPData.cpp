@@ -1,31 +1,40 @@
-#include "gbRawData.h"
+#include "gbUDPData.h"
 #include "gbAppPkg.h"
 #include "ThreadPool/gbThreadPool.h"
-gbRawDataMgr::gbRawDataMgr()
+gbUDPDataMgr::gbUDPDataMgr()
 {
 	//_workThread = new std::thread(_rawData2AppPkg);
 	//if (_workThread == nullptr)
 	//	throw std::exception("_workThread == nullptr");
 }
 
-void gbRawDataMgr::Push(unsigned char* data, const size_t len)
-{
-	{
-		std::lock_guard<std::mutex> lck(_mtx);
-		_qRD.push(new gbRawData(data, len));
-	}
+// void gbUDPDataMgr::Push(unsigned char* data, const size_t len)
+// {
+// 	{
+// 		std::lock_guard<std::mutex> lck(_mtx);
+// 		_qUDPData.push(new gbUDPData(data, len));
+// 	}
 
-	gbThreadPool::Instance().PushTask(gbTask(gbAppPkgMgr::HandleRawData, nullptr));
-	//_cv.notify_one();
+// 	gbThreadPool::Instance().PushTask(gbTask(gbAppPkgMgr::HandleRawData, nullptr));
+// 	//_cv.notify_one();
+// }
+
+void gbUDPDataMgr::Push(gbUDPData* udpData)
+{
+    {
+	std::lock_guard<std::mutex> lck(_mtx);
+	_qUDPData.push(udpData);
+    }
+    gbThreadPool::Instance().PushTask(gbTask(gbAppPkgMgr::HandleUDPData, nullptr));
 }
 
-gbRawData* gbRawDataMgr::Pop()
+gbUDPData* gbUDPDataMgr::Pop()
 {
 	std::lock_guard<std::mutex> lck(_mtx);
-	if (!_qRD.empty())
+	if (!_qUDPData.empty())
 	{
-		gbRawData* d = _qRD.front();
-		_qRD.pop();
+		gbUDPData* d = _qUDPData.front();
+		_qUDPData.pop();
 		return d;
 	}
 	else

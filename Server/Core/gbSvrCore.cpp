@@ -11,6 +11,7 @@
 
 #include "gbSvrLogicLoop.h"
 #include "LuaCPP/gbLuaCPP.h"
+#include "FileSystem/gbFileSystem.h"
 
 event_base* gbSvrCore::_base;
 evconnlistener* gbSvrCore::_listener;
@@ -20,6 +21,7 @@ lua_State* gbSvrCore::_L;
 unsigned char gbSvrCore::_recvBuffer[gb_UDP_MAX_PACKET_SIZE] = {0};
 evutil_socket_t gbSvrCore::_sockfd;
 event* gbSvrCore::_ev;
+gbString gbSvrCore::_workPath;
 bool gbSvrCore::Initialize()
 {
 #ifdef WIN32
@@ -79,8 +81,12 @@ bool gbSvrCore::Initialize()
 	if (_L == nullptr)
 		return false;
 
-//	if (!gbLuaCPP_dofile(_L, "Script/gbSvrCore.lua"))
-//	    return false;
+	gbFileSystem::Instance().GetWorkPath(_workPath);
+
+	gbLuaCPP_appendPackagePath(_L, _workPath + "../../Server/Script/");
+	
+	if (!gbLuaCPP_dofile(_L, _workPath + "../../Server/Script/gbSvrCore.lua"))
+	    return false;
 
 	return true;
 }
@@ -148,14 +154,16 @@ void gbSvrCore::_ev_cb(evutil_socket_t fd, short what, void* arg)
 {
     if(what & EV_READ)
     {
-	size_t len = recvfrom(fd, _recvBuffer, 512, 0, NULL, NULL);
+	sockaddr* srcSockAddr = new sockaddr;
+	static socklen_t addrLen = sizeof(sockaddr);
+	size_t len = recvfrom(fd, _recvBuffer, gb_UDP_MAX_PACKET_SIZE, 0, srcSockAddr, &addrLen);
 	if(len != -1)
 	{
 	    unsigned char* rBuf = new unsigned char[len];
 	    //release after decoded
 	    memcpy(rBuf, _recvBuffer, len);
 	
-	    gbRawDataMgr::Instance().Push(rBuf, len);
+	    gbUDPDataMgr::Instance().Push(rBuf, len);
 	}
 	else
 	    gbLog::Instance().Error((gbString)"recvfrom err@" + strerror(errno));
@@ -200,39 +208,39 @@ void gbSvrCore::_svr_core_thread(void* p)
 // 	event_base_loopexit(base, NULL);
 // }
 
-void gbSvrCore::_read_cb(bufferevent* bev, void* ctx)
-{
-	//evbuffer* input = bufferevent_get_input(bev);
+// void gbSvrCore::_read_cb(bufferevent* bev, void* ctx)
+// {
+// 	//evbuffer* input = bufferevent_get_input(bev);
 
-	//evbuffer* output = bufferevent_get_output(bev);
+// 	//evbuffer* output = bufferevent_get_output(bev);
 
-	//evbuffer_add_buffer(output, input);
+// 	//evbuffer_add_buffer(output, input);
 
-	const size_t length = evbuffer_get_length(bev->input);
-	//release after decoded
-	unsigned char* buffer = new unsigned char[length];
-	bufferevent_read(bev, buffer, length);
-	gbRawDataMgr::Instance().Push(buffer, length);
-	return;
+// 	const size_t length = evbuffer_get_length(bev->input);
+// 	//release after decoded
+// 	unsigned char* buffer = new unsigned char[length];
+// 	bufferevent_read(bev, buffer, length);
+// 	gbRawDataMgr::Instance().Push(buffer, length);
+// 	return;
 
-	char tmp[1024] = { '\0' };
-	size_t len = bufferevent_read(bev, tmp, 1024);
+// 	char tmp[1024] = { '\0' };
+// 	size_t len = bufferevent_read(bev, tmp, 1024);
 
-	len = len == 1024 ? 1023 : len;
-	tmp[len] = '\0';
-	gbLog::Instance().Log(gbString("on reead:") + tmp);
+// 	len = len == 1024 ? 1023 : len;
+// 	tmp[len] = '\0';
+// 	gbLog::Instance().Log(gbString("on reead:") + tmp);
 
-	bufferevent_write(bev, tmp, len);
-}
+// 	bufferevent_write(bev, tmp, len);
+// }
 
 
-void gbSvrCore::_event_cb(bufferevent* bev, short events, void* ctx)
-{
-	if (events & BEV_EVENT_ERROR)
-		gbLog::Instance().Error("BEV_EVENT_ERROR");
-	if (events & BEV_EVENT_EOF)
-		gbLog::Instance().Error("BEV_EVENT_EOF");
-}
+// void gbSvrCore::_event_cb(bufferevent* bev, short events, void* ctx)
+// {
+// 	if (events & BEV_EVENT_ERROR)
+// 		gbLog::Instance().Error("BEV_EVENT_ERROR");
+// 	if (events & BEV_EVENT_EOF)
+// 		gbLog::Instance().Error("BEV_EVENT_EOF");
+// }
 
 void gbSvrCore::_log_callback(int severity, const char* msg)
 {

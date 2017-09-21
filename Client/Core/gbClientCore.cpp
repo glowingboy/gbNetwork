@@ -167,7 +167,7 @@ void gbClientCore::_ev_cb(evutil_socket_t fd, short what, void* arg)
 	    //release after decoded
 	    memcpy(rBuf, _recvBuffer, len);
 	
-	    gbRawDataMgr::Instance().Push(rBuf, len);
+	    gbUDPDataMgr::Instance().Push(rBuf, len);
 	}
 	else
 	    gbLog::Instance().Error((gbString)"recvfrom err@" + strerror(errno));

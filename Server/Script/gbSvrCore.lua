@@ -1,8 +1,8 @@
 print("loading gbSvrCore")
 
-local scriptPath = "Script/?.lua"
+-- local scriptPath = "../../Server/Script/?.lua"
 
-package.path = string.format("%s;%s", package.path, scriptPath)
+-- package.path = string.format("%s;%s", package.path, scriptPath)
 
 gbAccMgr = require("gbAccMgr")
 

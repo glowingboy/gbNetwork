@@ -1,12 +1,13 @@
 #pragma once 
 #include "gbCommon.h"
 #include <mutex>
-#include "gbRawData.h"
+#include "gbUDPData.h"
 #include <vector>
 #include <queue>
 
 /**
-	appPkg:4 bytes length + body(1 byte type + szData)
+   appPkg(TCP):4 bytes length + body(1 byte type + szData)
+   appPkg(UDP):body(1 byte type + szData)
 */
 
 //data sync
@@ -21,25 +22,31 @@ typedef unsigned int appPkgLen;
 class gbAppPkg
 {
 public:
-	//gbAppPkg(unsigned char* data, const appPkgLen len);
-	static void Handle(unsigned char* data, const appPkgLen len);
+    //gbAppPkg(unsigned char* data, const appPkgLen len);
+//    static void Handle(unsigned char* data, const appPkgLen len);
+    static void Handle(gbUDPData* ud);
 //private:
 //	const unsigned char _type;
 //	unsigned char* _szData;
 
 };
 
+
+
 class gbAppPkgMgr
 {
-	SingletonDeclare(gbAppPkgMgr)
+    SingletonDeclare(gbAppPkgMgr)
 
-public:
-	//@param maxCount, if maxCount == -1, then drain out the rawData queue
-	static void HandleRawData(void* p);
-	void _handleRawData(const unsigned int maxCount);
-	void Decode(gbRawData* rd);
-	void Encode(const char* szData, const unsigned char type, unsigned char*& rawData, size_t & rdSize);
+    public:
+    //@param maxCount, if maxCount == -1, then drain out the rawData queue
+    static void HandleUDPData(void* p);
+    void _handleUDPData(const unsigned int maxCount);
+    //for tcp
+//    void Decode(gbUDPData* rd);
+    void Decode_udp(gbUDPData* ud);
+    void Encode(const char* szData, const unsigned char type, unsigned char*& rawData, size_t & rdSize);
 private:
-	std::vector<unsigned char> _vRemainderPkg;
-	//std::queue<gbAppPkg*> _qAppPkgs;//todo, priority queue?
+    //for tcp
+//    std::vector<unsigned char> _vRemainderPkg;
+    //std::queue<gbAppPkg*> _qAppPkgs;//todo, priority queue?
 };
