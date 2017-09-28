@@ -7,7 +7,7 @@
 #include "event2/thread.h"
 #include "gbCommon.h"
 #include <string.h>
-#include "../gbRawData.h"
+#include "../gbUDPData.h"
 
 class gbSendPkg
 {

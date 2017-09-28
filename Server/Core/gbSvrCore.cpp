@@ -12,7 +12,7 @@
 #include "gbSvrLogicLoop.h"
 #include "LuaCPP/gbLuaCPP.h"
 #include "FileSystem/gbFileSystem.h"
-
+#include "../gbLuaState.h"
 event_base* gbSvrCore::_base;
 evconnlistener* gbSvrCore::_listener;
 bool gbSvrCore::_is_little_endian;
@@ -51,7 +51,7 @@ bool gbSvrCore::Initialize()
 #endif
 
 
-	if (!gbThreadPool::Instance().Initialize(100))
+	if (!gbThreadPool::Instance().Initialize(-1))
 	{
 		gbLog::Instance().Error("thread pool initialize error");
 		return false;
@@ -81,9 +81,12 @@ bool gbSvrCore::Initialize()
 	if (_L == nullptr)
 		return false;
 
+	gbLuaStateMgr::Instance().SetAccInfoState(_L);
+	
 	gbFileSystem::Instance().GetWorkPath(_workPath);
 
 	gbLuaCPP_appendPackagePath(_L, _workPath + "../../Server/Script/");
+	gbLuaCPP_appendPackagePath(_L, _workPath + "../../Server/Data/");
 	
 	if (!gbLuaCPP_dofile(_L, _workPath + "../../Server/Script/gbSvrCore.lua"))
 	    return false;
@@ -162,8 +165,11 @@ void gbSvrCore::_ev_cb(evutil_socket_t fd, short what, void* arg)
 	    unsigned char* rBuf = new unsigned char[len];
 	    //release after decoded
 	    memcpy(rBuf, _recvBuffer, len);
-	
-	    gbUDPDataMgr::Instance().Push(rBuf, len);
+
+	    gbUDPData *ud = new gbUDPData(rBuf, len, srcSockAddr, addrLen);
+	    
+//	    gbUDPDataMgr::Instance().Push(rBuf, len);
+	    gbUDPDataMgr::Instance().Push(ud);
 	}
 	else
 	    gbLog::Instance().Error((gbString)"recvfrom err@" + strerror(errno));

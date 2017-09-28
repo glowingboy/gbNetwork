@@ -6,7 +6,7 @@
 #include "gbCommon.h"
 #include <thread>
 #include "LuaCPP/gbLuaCPP.h"
-#include "../gbRawData.h"
+#include "../../gbUDPData.h"
 #include "String/gbString.h"
 class gbSvrCore
 {

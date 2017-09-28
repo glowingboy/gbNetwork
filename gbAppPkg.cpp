@@ -4,6 +4,8 @@
 #include <algorithm>
 #include "LuaCPP/gbLuaCPP.h"
 #include "Log/gbLog.h"
+#include "Server/gbLuaState.h"
+
 //gbAppPkg::gbAppPkg(unsigned char* data, const appPkgLen len):
 //	_type(*data)
 //{
@@ -39,11 +41,8 @@ void gbAppPkg::Handle(gbUDPData* ud)
     else if (type == 'X')
     {
 	gbLog::Instance().Log((char*)data);
-	//lua_State* l = lua_newthread(gbLuaState);
-	    
-
-	//gbLuaCPP_dostring((const char*)(data + 1));
-
+	lua_State* l = gbLuaStateMgr::Instance().GetAccInfoState();
+	gbLuaCPP_dostring(l, (const char*)(data + 1));
     }
 }
 
