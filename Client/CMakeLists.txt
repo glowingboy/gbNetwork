@@ -80,6 +80,7 @@ target_link_libraries(gbClient
   debug ${gbUtils_LIBRARIES_d}
   optimized ${gbUtils_LIBRARIES}
   ${lua_LIBRARIES}
+  dl
   ${ws2_32_lib}
   ${pthread_lib}
   )

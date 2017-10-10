@@ -41,8 +41,8 @@ void gbAppPkg::Handle(gbUDPData* ud)
     else if (type == 'X')
     {
 	gbLog::Instance().Log((char*)data);
-	lua_State* l = gbLuaStateMgr::Instance().GetAccInfoState();
-	gbLuaCPP_dostring(l, (const char*)(data + 1));
+//	lua_State* l = gbLuaStateMgr::Instance().GetAccInfoState();
+//	gbLuaCPP_dostring(l, (const char*)(data + 1));
     }
 }
 

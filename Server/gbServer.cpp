@@ -1,9 +1,15 @@
 #include <iostream>
-#include "Core/gbSvrCore.h"
-#include <unistd.h>
+//#include "Core/gbSvrCore.h"
+#include "gbSvrNet.h"
 int main(int argc, char** argv)
 {
-    if (gbSvrCore::Initialize())
-	gbSvrCore::Run("6666");
+
+    if(!gbSvrNet::Instance().Start("172.16.3.156",6668))
+    {
+	gbLog::Instance().Error("gbSvrNet start err");
+	return -1;
+    }
+
+    ::getchar();
     return 0;
 }

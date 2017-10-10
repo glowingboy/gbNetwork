@@ -6,7 +6,7 @@ int main(int argc, char** argv)
 	if (!gbClientCore::Initialize())
 		return -1;
 	gbClientCore c;
-	c.Connect("127.0.0.1", "6666");
+	c.Connect("127.0.0.1", "6668");
 
 	char ind;
 	while(true)

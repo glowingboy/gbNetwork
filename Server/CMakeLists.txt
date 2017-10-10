@@ -16,6 +16,9 @@ include_directories(SYSTEM ${lua_INCLUDE_DIRS})
 find_package(gbUtils REQUIRED)
 include_directories(SYSTEM ${gbUtils_INCLUDE_DIRS})
 
+find_package(libtheron REQUIRED)
+include_directories(SYSTEM ${libtheron_INCLUDE_DIRS})
+
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 
 set(gb_server_srcs)
@@ -42,13 +45,15 @@ macro(gb_add_class clsName dir)
 endmacro()
 
 gb_add_class(gbServer .)
-gb_add_class(gbSvrCore Core)
+gb_add_class(gbSvrNet .)
 gb_add_class(gbSvrUsr Core)
-gb_add_class(gbByteOrderAmend ..)
-gb_add_class(gbUDPData ..)
-gb_add_class(gbAppPkg .. )
-gb_add_class(gbSvrLogicLoop .)
-add_executable(server
+gb_add_class(gbUDPDataHandler .)
+# gb_add_class(gbByteOrderAmend ..)
+# gb_add_class(gbUDPData ..)
+# gb_add_class(gbAppPkg .. )
+# gb_add_class(gbSvrLogicLoop .)
+
+add_executable(gbServer
   ${gb_server_srcs} ${gb_server_headers}
   )
 
@@ -67,13 +72,21 @@ if(NOT gbUtils_LIBRARIES_d)
   set(gbUtils_LIBRARIES_d ${gbUtils_LIBRARIES})
 endif()
 
-target_link_libraries(server
+if(NOT libtheron_LIBRARIES_d)
+  message(WARNING "libtherond not found")
+  set(libtheron_LIBRARIES_d ${libtheron_LIBRARIES})
+endif()
+
+target_link_libraries(gbServer
   ${libevent_LIBRARIES}
   debug ${gbUtils_LIBRARIES_d}
   optimized ${gbUtils_LIBRARIES}
+  debug ${libtheron_LIBRARIES_d}
+  optimized ${libtheron_LIBRARIES}
   ${lua_LIBRARIES}
   ${ws2_32_lib}
   ${pthread_lib}
+  dl
   )
 
 
