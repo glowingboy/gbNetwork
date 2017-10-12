@@ -4,9 +4,10 @@ if(NOT CMAKE_BUILD_TYPE)
   set(CMAKE_BUILD_TYPE "Debug")
 endif()
 
-set(CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS} "-std=c++11")
+set(CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS} "-std=c++11 -DTHERON_CPP11=1")
 
-set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/CMake/")
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/../CMake/")
+
 find_package(libevent REQUIRED)
 include_directories(SYSTEM ${libevent_INCLUDE_DIRS})
 
@@ -48,6 +49,7 @@ gb_add_class(gbServer .)
 gb_add_class(gbSvrNet .)
 gb_add_class(gbSvrUsr Core)
 gb_add_class(gbUDPDataHandler .)
+gb_add_class(gbActor .)
 # gb_add_class(gbByteOrderAmend ..)
 # gb_add_class(gbUDPData ..)
 # gb_add_class(gbAppPkg .. )

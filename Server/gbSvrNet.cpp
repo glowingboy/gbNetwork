@@ -7,6 +7,9 @@ unsigned char gbSvrNet::_recvBuffer[gb_UDP_MAX_PACKET_SIZE] = {'\0'};
 
 bool gbSvrNet::Start(const char* szLocalIP, const unsigned short port)
 {
+
+    gbUDPDataHandler::Instance().Initialize(16);
+    
 #ifdef _DEBUG
     event_enable_debug_mode();
 #endif
