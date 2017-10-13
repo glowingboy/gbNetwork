@@ -1,5 +1,12 @@
 #include "gbAccInfo.h"
 
+void gbAccInfo::gb_LC_Reg(lua_State *L)
+{
+    gb_LC_Func_Def;
+    gb_LC_Func_push("GetPassword", &gbAccInfo::gb_LC_EF_GetPassword);
+    
+    gbLuaCPP<gbAccInfo>::Register(L, "gbAccInfo", funcs);
+}
 
 bool gbAccInfoAccesser::NewAccInfo(const gbAccInfo& accInfo)
 {
@@ -41,4 +48,14 @@ const gbAccInfo* gbAccInfoAccesser::GetAccInfo(const char* szName)
 	return &(i->second);
     else
 	return nullptr; 
+}
+
+void gbAccInfoAccesser::gb_LC_Reg(lua_State *L)
+{
+    gb_LC_Func_Def;
+    gb_LC_Func_push("GetAccInfo", &gbAccInfoAccesser::gb_LC_EF_GetAccInfo);
+
+    gbLuaCPP<gbAccInfoAccesser>::Register(L, "gbAccInfoAccesser", funcs);
+
+    gbLuaCPP<gbAccInfoAccesser>::RegisterSingleton(L, "gbAccInfoAccesser");
 }

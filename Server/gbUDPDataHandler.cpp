@@ -20,7 +20,7 @@ gbUDPActorMsg::~gbUDPActorMsg()
 {
     gbSAFE_DELETE(_data);
 }
-void gbUDPActorMsg::Process()
+void gbUDPActorMsg::Process(const unsigned int actorIdx)
 {
     gbLog::Instance().Log(gbString("processing data:") + (char*)_data->Data());
     _processed = true;
