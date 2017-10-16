@@ -1,5 +1,6 @@
 #include "gbAccInfo.h"
-
+#include "Log/gbLog.h"
+#include "String/gbString.h"
 void gbAccInfo::gb_LC_Reg(lua_State *L)
 {
     gb_LC_Func_Def;
@@ -11,7 +12,7 @@ void gbAccInfo::gb_LC_Reg(lua_State *L)
 bool gbAccInfoAccesser::NewAccInfo(const gbAccInfo& accInfo)
 {
     {
-	std::lock_guard<std::mutex> lck(_accInfosMtx);
+	std::lock_guard<std::mutex> lck(_accInfosMtx);	    
 	accInfoIterator i = _mpAccInfos.find(accInfo.GetName());
 	if(i == _mpAccInfos.end())
 	{
@@ -54,7 +55,9 @@ void gbAccInfoAccesser::gb_LC_Reg(lua_State *L)
 {
     gb_LC_Func_Def;
     gb_LC_Func_push("GetAccInfo", &gbAccInfoAccesser::gb_LC_EF_GetAccInfo);
-
+    gb_LC_Func_push("NewAccInfo", &gbAccInfoAccesser::gb_LC_EF_NewAccInfo);
+    gb_LC_Func_push("SetAccInfo", &gbAccInfoAccesser::gb_LC_EF_SetAccInfo);
+    
     gbLuaCPP<gbAccInfoAccesser>::Register(L, "gbAccInfoAccesser", funcs);
 
     gbLuaCPP<gbAccInfoAccesser>::RegisterSingleton(L, "gbAccInfoAccesser");

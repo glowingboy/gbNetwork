@@ -1,7 +1,7 @@
 #include "gbUDPDataHandler.h"
 #include "Log/gbLog.h"
 #include "String/gbString.h"
-
+#include "gbSvrLogic.h"
 gbUDPActorMsg::gbUDPActorMsg(gbUDPData* data):
     _data(data),
     _processed(false)
@@ -22,8 +22,21 @@ gbUDPActorMsg::~gbUDPActorMsg()
 }
 void gbUDPActorMsg::Process(const unsigned int actorIdx)
 {
-    gbLog::Instance().Log(gbString("processing data:") + (char*)_data->Data());
-    _processed = true;
+    // char type = *(char*)_data->Data();
+    // if(type == 'X')
+    // {
+    // 	char* lua_cmd = (char*)(_data->Data() + 1);
+    // 	gbLog::Instance().Log(gbString("processing data:") + lua_cmd);
+    // 	lua_State* l = gbSvrLogic::Instance().GetLNASubState(actorIdx);
+    // 	gbLuaCPP_dostring(l, lua_cmd);
+    // }
+    // else if(type == 'T')
+    // {
+	
+    // }
+    
+    _data->Process(gbSvrLogic::Instance().GetLNASubState(actorIdx));
+    _processed = true;    
 }
 gbUDPDataHandler::~gbUDPDataHandler()
 {

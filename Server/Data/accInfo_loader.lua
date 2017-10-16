@@ -1,9 +1,17 @@
 local accInfo_loader = {}
 
 data = require("accInfo")
-local accInfoAccesserInst = gbLLA.gbAccInfoAccesser.Instance
+local accInfoAccesserInst = gbLLA.gbAccInfoAccesserInst
 
-function accInfo:loader()
+function tbl_print(tbl)
+   local k,v = next(tbl)
+   while (k ~= nil) do
+      print("k:" .. tostring(k) .. ";v:" .. tostring(v))
+      k, v = next(tbl, k)
+   end
+end
+
+function accInfo_loader:loader()
    local k,v = next(data)
    while (k ~= nil) do
       if(type(v) == "table") then
@@ -14,3 +22,5 @@ function accInfo:loader()
       k, v = next(data, k)
    end
 end
+
+return accInfo_loader

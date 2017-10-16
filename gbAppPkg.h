@@ -1,25 +1,39 @@
 #pragma once 
-#include "gbCommon.h"
-#include <mutex>
-#include "gbUDPData.h"
-#include <vector>
-#include <queue>
+// #include "gbCommon.h"
+// #include <mutex>
+// #include "gbUDPData.h"
+// #include <vector>
+// #include <queue>
 
 /**
-   appPkg(TCP):4 bytes length + body(1 byte type + szData)
-   appPkg(UDP):4 bytes idx + body(1 byte type + szData)
+   appPkg(UDP)
+   X:
+   appPkg:4 bytes type + lua_cmd
+   
+   // R:
+   // appPkg:4 bytes type + lua_table_param({callback_idx , callback_param})
+   R: <===> X appPkg: lua_cmd = LNA.R(lua_table_param)
+
+   T:
+   appPkg:4 bytes type + 4 bytes callback_idx + 4 bytes sizeof data + data
 */
 
 //excute cmd(lua RPC)
 #define gb_APPPKG_TYPE_X 'X'
+
+// //excute result
+// #define gb_APPPKG_TYPE_R 'R'
+//R == X: LNA.R(lua_table_param)
+
+
 //data transfer
 #define gb_APPPKG_TYPE_T 'T'
 
-typedef unsigned int appPkgLen;
-#define gb_APPPKG_LEN_SIZE 4
-class gbAppPkg
-{
-public:
-    static void Handle(gbUDPData* ud);
-    static void Encode(const unsigned char* data, const unsigned int size, const unsigned char type);
-};
+// class gbAppPkg
+// {
+// public:
+//     static void Handle(gbUDPData* ud);
+//     static void Encode(const unsigned char* data, const unsigned int size, const unsigned char type);
+// };
+
+

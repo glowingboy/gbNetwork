@@ -8,6 +8,10 @@ class gbAccInfo
 {
 public:
     inline gbAccInfo(){}
+    inline gbAccInfo(const char* name, const char* password):
+	szName(name),
+	szPassword(password)
+	{}
     inline gbAccInfo(const gbAccInfo & other):
 	szName(std::move(other.szName)),
 	szPassword(std::move(other.szPassword))

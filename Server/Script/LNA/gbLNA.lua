@@ -3,14 +3,12 @@
 ]]--
 local gbLNA = {}
 
-local gbLLA = require("gbLLA")
+gbLLA = require("gbLLA")
+gbLLA:Initialize()
 
 gbLNA.AccMgr = require("gbAccMgr")
 
-function gbLNA:Initialize()
-   --global tables hide
-   
-end
+_G.gbLLA = nil
 
 --gbLNA.Game = require("Game")
 return gbLNA

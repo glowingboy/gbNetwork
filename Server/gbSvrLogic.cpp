@@ -2,34 +2,36 @@
 #include "Log/gbLog.h"
 #include "FileSystem/gbFileSystem.h"
 #include "Data/gbAccInfo.h"
+#include "gbUDPDataHandler.h"
+
 bool gbSvrLogic::Start()
 {
     //lua network api(LNA)
-    lua_State* lnaState = luaL_newstate();
-    if(lnaState == nullptr)
+    _lnaState = luaL_newstate();
+    if(_lnaState == nullptr)
     {
 	gbLog::Instance().Log("luaL_newstate nullptr");
 	return false;
     }
-    luaL_openlibs(lnaState);
+    luaL_openlibs(_lnaState);
 
     //register lua api
-    gbAccInfo::gb_LC_Reg(lnaState);
-    gbAccInfoAccesser::gb_LC_Reg(lnaState, "gbLLA");
+    gbAccInfo::gb_LC_Reg(_lnaState);
+    gbAccInfoAccesser::gb_LC_Reg(_lnaState);
+    
+    gbFileSystem::Instance().GetWorkPath(_workPath);
+    gbLuaCPP_appendPackagePath(_lnaState, _workPath + "../Script/LNA");
+    gbLuaCPP_appendPackagePath(_lnaState, _workPath + "../Script/LLA");
+    gbLuaCPP_appendPackagePath(_lnaState, _workPath + "../Data");
+    gbLuaCPP_dofile(_lnaState, _workPath + "../Script/LNA/gbLNA.lua");
     
 
-    gbFileSystem::Instance().GetWorkPath(_workPath);
-    gbLuaCPP_appendPackagePath(lnaState, _workPath + "../Script/LNA/");
-    gbLuaCPP_appendPackagePath(lnaState, _workPath + "../Script/LLA/");
-    gbLuaCPP_dofile(lnaState, _workPath + "../Script/LNA/gbLNA.lua");
+    gbUDPDataHandler::Instance().Initialize(16);
     
-    
-    lua_State* lnaSubState[16] = {nullptr};
-    for(int i = 0; i < 16; i++)
+    for(int i = 0; i < gb_SVR_LOGIC_UDP_HANDLER_ACTOR_NUM; i++)
     {
-	lnaSubState[i] = lua_newthread(lnaState);
+	_lnaSubState[i] = lua_newthread(_lnaState);
     }
 
-    
-
+    return true;
 }
