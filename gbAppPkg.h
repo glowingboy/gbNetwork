@@ -1,4 +1,6 @@
-#pragma once 
+#pragma once
+#include "gbType.h"
+
 // #include "gbCommon.h"
 // #include <mutex>
 // #include "gbUDPData.h"
@@ -36,4 +38,10 @@
 //     static void Encode(const unsigned char* data, const unsigned int size, const unsigned char type);
 // };
 
+struct lua_State;
 
+class gbAppPkg
+{
+public:
+    static void Handle(unsigned char* data, const unsigned int size, const gb_socket_t socket, lua_State* l);
+};

@@ -2,6 +2,7 @@
 
 #include "Theron/Theron.h"
 #include <queue>
+#include <unordered_map>
 
 // class gbActorMsg
 // {
@@ -86,6 +87,100 @@ private:
 
 		_msgs.pop();
 		_freeWorker.pop();
+	    }
+	}
+};
+
+struct gbRefCountAddress
+{
+    inline gbRefCountAddress(Theron::Address Addr):
+	refCount(1),
+	addr(Addr)
+	{}
+    unsigned int refCount;
+    Theron::Address addr;
+};
+//for some msg needed be handled sequencially
+template<typename MsgType, typename MsgKey>
+class gbSerializeActorDispatcher:public Theron::Actor
+{
+    typedef gbActor<MsgType> WorkerType;
+public:
+    gbSerializeActorDispatcher(Theron::Framework & framework, const unsigned int num):
+	Theron::Actor(framework)
+	{
+	    for(int i= 0; i < num; i++)
+	    {
+		WorkerType* a = new WorkerType(framework, i);
+		_workers.push(a);
+		_freeWorker.push(a->GetAddress());
+	    }
+
+	    RegisterHandler(this, &gbSerializeActorDispatcher::_handler);
+	}
+    ~gbSerializeActorDispatcher()
+	{
+	    while(!_workers.empty())
+	    {
+		delete _workers.front();
+		_workers.pop();
+	    }
+	}
+private:
+    std::queue<WorkerType*> _workers;
+    std::queue<Theron::Address> _freeWorker;
+    std::unordered_map<MsgKey, gbRefCountAddress*> _mpBusyWorker;
+    std::queue<MsgType> _msgs;
+private:
+    void _handler(const MsgType & msg, const Theron::Address from)
+	{
+	    if(msg->IsProcessed())
+	    {
+		typename std::unordered_map<MsgKey, gbRefCountAddress*>::iterator itr = _mpBusyWorker.find(msg->GetKey());
+		if(itr != _mpBusyWorker.end())
+		{
+		    gbRefCountAddress * addr = itr->second;
+		    addr->refCount--;
+		    if(addr->refCount == 0)
+		    {
+			_mpBusyWorker.erase(itr);
+			_freeWorker.push(addr->addr);
+		    }
+		}
+		else
+		    ;//err
+	    }
+	    else
+	    {
+		_msgs.push(msg);
+	    }
+	    
+	    while(!_msgs.empty())
+	    {
+		const MsgType& front = _msgs.front();
+		typename std::unordered_map<MsgKey, gbRefCountAddress*>::iterator itr = _mpBusyWorker.find(front->GetKey());
+		if(itr != _mpBusyWorker.end())
+		{
+		    gbRefCountAddress* addr = itr->second;
+		    Send(front, addr->addr);
+		    addr->refCount++;
+		    _msgs.pop();
+		}
+		else
+		{
+		    if(!_freeWorker.empty())
+		    {
+			Theron::Address tAddr = _freeWorker.front();
+			Send(front, tAddr);
+			gbRefCountAddress * addr = new gbRefCountAddress(tAddr);
+			_mpBusyWorker.insert(std::pair<MsgKey, gbRefCountAddress*>(front->GetKey(),addr));
+			_msgs.pop();
+			_freeWorker.pop();
+		    }
+		    else
+			break;
+		}
+		    
 	    }
 	}
 };

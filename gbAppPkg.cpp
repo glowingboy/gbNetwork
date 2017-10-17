@@ -117,3 +117,18 @@
 
 // //     rd->ReleaseBuffer();
 // // }
+#include "gbAppPkg.h"
+#include "LuaCPP/gbLuaCPP.h"
+
+void gbAppPkg::Handle(unsigned char* data, const unsigned int size, const gb_socket_t socket, lua_State* l)
+{
+    char type = *(char*)data;
+    if(type == 'X')
+    {
+	gbLuaCPP_dostring(l, (char*)(data + 1));
+    }
+    else if(type == 'T')
+    {
+	
+    }
+}

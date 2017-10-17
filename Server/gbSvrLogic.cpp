@@ -2,8 +2,8 @@
 #include "Log/gbLog.h"
 #include "FileSystem/gbFileSystem.h"
 #include "Data/gbAccInfo.h"
-#include "gbUDPDataHandler.h"
-
+//#include "gbUDPDataHandler.h"
+#include "gbTCPPkgHandler.h"
 bool gbSvrLogic::Start()
 {
     //lua network api(LNA)
@@ -26,7 +26,8 @@ bool gbSvrLogic::Start()
     gbLuaCPP_dofile(_lnaState, _workPath + "../Script/LNA/gbLNA.lua");
     
 
-    gbUDPDataHandler::Instance().Initialize(16);
+    gbTCPPkgHandler::Instance().Initialize(16);
+//    gbUDPDataHandler::Instance().Initialize(16);
     
     for(int i = 0; i < gb_SVR_LOGIC_UDP_HANDLER_ACTOR_NUM; i++)
     {

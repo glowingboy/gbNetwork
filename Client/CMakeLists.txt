@@ -42,10 +42,11 @@ macro(gb_add_class clsName dir)
   
 endmacro()
 
-gb_add_class(gbClientCore Core)
-gb_add_class(gbUDPData ..)
-gb_add_class(gbAppPkg ..)
-gb_add_class(gbByteOrderAmend ..)
+# gb_add_class(gbClientCore Core)
+gb_add_class(gbNWClient .)
+# gb_add_class(gbUDPData ..)
+# gb_add_class(gbAppPkg ..)
+# gb_add_class(gbByteOrderAmend ..)
 
 gb_add_class(test .)
 

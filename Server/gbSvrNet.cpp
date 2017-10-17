@@ -1,9 +1,9 @@
 #include "gbSvrNet.h"
 #include <unistd.h>
 #include <arpa/inet.h>
-#include <fcntl.h>
-
-unsigned char gbSvrNet::_recvBuffer[gb_UDP_MAX_PACKET_SIZE] = {'\0'};
+//#include <fcntl.h>
+#include "gbTCPPkgHandler.h"
+//unsigned char gbSvrNet::_recvBuffer[gb_UDP_MAX_PACKET_SIZE] = {'\0'};
 //event_base* gbSvrNet::_base;
 
 bool gbSvrNet::Start(const char* szLocalIP, const unsigned short port)
@@ -55,7 +55,7 @@ bool gbSvrNet::Start(const char* szLocalIP, const unsigned short port)
     int t = 1;
     _is_little_endian = ((char*)&t)[0];
 
-    _sockfd = socket(AF_INET, SOCK_STREAM, 0);
+    _sockfd = socket(AF_INET, SOCK_STREAM | SOCK_NONBLOCK, 0);
     if(_sockfd == -1)
     {
 	gbLog::Instance().Error(gbString("sockfd create err@") + strerror(errno));
@@ -76,11 +76,11 @@ bool gbSvrNet::Start(const char* szLocalIP, const unsigned short port)
     	return false;
     }
 
-    if(fcntl(_sockfd, F_SETFL, O_NONBLOCK) == -1)
-    {
-    	gbLog::Instance().Error(gbString("fcntl err@") + strerror(errno));
-    	return false;
-    }
+    // if(fcntl(_sockfd, F_SETFL, O_NONBLOCK) == -1)
+    // {
+    // 	gbLog::Instance().Error(gbString("fcntl err@") + strerror(errno));
+    // 	return false;
+    // }
 
     if(bind(_sockfd, (sockaddr*)&svrAddr, sizeof(svrAddr)) == -1)
     {
@@ -89,6 +89,7 @@ bool gbSvrNet::Start(const char* szLocalIP, const unsigned short port)
     }
 
     _listener = evconnlistener_new(_base,_listener_cb, nullptr, LEV_OPT_CLOSE_ON_FREE, -1, _sockfd);
+    evconnlistener_set_error_cb(_listener, _listener_error_cb);
     
 //    _ev = event_new(_base, _sockfd, EV_READ | EV_WRITE | EV_PERSIST | EV_ET, _ev_cb, NULL);
     
@@ -96,7 +97,7 @@ bool gbSvrNet::Start(const char* szLocalIP, const unsigned short port)
 
     
     //watchdog socket
-    _watchdogSockfd = socket(AF_INET, SOCK_STREAM, 0);
+    _watchdogSockfd = socket(AF_INET, SOCK_STREAM | SOCK_NONBLOCK, 0);
     if(_watchdogSockfd == -1)
     {
     	gbLog::Instance().Error(gbString("watchdogSockfd create err@") + strerror(errno));
@@ -123,6 +124,8 @@ bool gbSvrNet::Start(const char* szLocalIP, const unsigned short port)
     	gbLog::Instance().Error(gbString("bind err@") + strerror(errno));
     	return false;
     }
+    //todo watchdog
+    
     // _watchdogEv = event_new(_base, _watchdogSockfd, EV_READ | EV_WRITE | EV_PERSIST | EV_ET, _watchdog_ev_cb, NULL);
     // event_add(_watchdogEv, NULL);
 
@@ -164,11 +167,11 @@ void gbSvrNet::_watchdog_ev_cb(evutil_socket_t fd, short what, void* arg)
     {
 	sockaddr* srcSockAddr = new sockaddr;
 	static socklen_t addrLen = sizeof(sockaddr);
-	size_t len = recvfrom(fd, _recvBuffer, gb_UDP_MAX_PACKET_SIZE, 0, srcSockAddr, &addrLen);
-	if(len != -1)
-	{
-	    gbLog::Instance().Log(gbString("_wd_ev_cb:") + (char*)_recvBuffer);
-	}
+	// size_t len = recvfrom(fd, _recvBuffer, gb_UDP_MAX_PACKET_SIZE, 0, srcSockAddr, &addrLen);
+	// if(len != -1)
+	// {
+	//     gbLog::Instance().Log(gbString("_wd_ev_cb:") + (char*)_recvBuffer);
+	// }
 	
 //    event_base_loopexit(_base, NULL);
 	//gbSvrNet::Instance().Shutdown();
@@ -183,23 +186,56 @@ void gbSvrNet::_ev_cb(evutil_socket_t fd, short what, void* arg)
 {
     if(what & EV_READ)
     {
-	sockaddr* srcSockAddr = new sockaddr;
-	static socklen_t addrLen = sizeof(sockaddr);
-	size_t len = recvfrom(fd, _recvBuffer, gb_UDP_MAX_PACKET_SIZE, 0, srcSockAddr, &addrLen);
-	if(len != -1)
+	std::unordered_map<evutil_socket_t, gbTCPSocketData*>& mpTCPSD = gbSvrNet::Instance()._mpTCPSocketDatas;
+	TCPSocketDataItr itr = mpTCPSD.find(fd);
+	if(itr != mpTCPSD.end())
 	{
-	    unsigned char* rBuf = new unsigned char[len];
-	    memcpy(rBuf, _recvBuffer, len);
-
-	    gbUDPData *ud = new gbUDPData(rBuf, len, srcSockAddr, addrLen);
-
-	    gbUDPDataHandler::Instance().Handle(ud);
+	    gbTCPSocketData * sd = itr->second;
+	    gbTCPRawData * rd = new gbTCPRawData;
+	    rd->socketData = sd;
+	    rd->data = new unsigned char[gb_TCPPKG_MAX_SIZE]{'\0'};
+	    rd->length = recv(fd, rd->data, gb_TCPPKG_MAX_SIZE, 0);
+	    if(rd->length != -1)
+	    {
+		gbTCPPkgHandler::Instance().Handle(rd);
+	    }
+	    else
+	    {
+		gbLog::Instance().Error("recv error");
+		gbSAFE_DELETE(rd);
+	    }
+	    // std::vector<unsigned char>& remainder = sd->GetRemainderData();
+	    // for(;;)
+	    // {
+	    // 	static unsigned char buffer[gb_TCPPKG_MAX_SIZE] = {'\0'};
+	    // 	static unsigned int lenRcv = 0;
+	    // 	lenRcv = recv(fd, buffer, gb_TCPPKG_MAX_SIZE, 0);
+	    // 	remainder.insert(remainder.end(), buffer, buffer + lenRcv);
+	    // 	if(lenRcv < gb_TCPPKG_MAX_SIZE)
+	    // 	    break;
+	    // }
+	    
 	}
 	else
-	{
-	    gbLog::Instance().Error((gbString)"recvfrom err@" + strerror(errno));
-	    gbSAFE_DELETE(srcSockAddr);
-	}
+	    gbLog::Instance().Error("itr nullptr");
+	
+	// sockaddr* srcSockAddr = new sockaddr;
+	// static socklen_t addrLen = sizeof(sockaddr);
+	// size_t len = recvfrom(fd, _recvBuffer, gb_UDP_MAX_PACKET_SIZE, 0, srcSockAddr, &addrLen);
+	// if(len != -1)
+	// {
+	//     unsigned char* rBuf = new unsigned char[len];
+	//     memcpy(rBuf, _recvBuffer, len);
+
+	//     gbUDPData *ud = new gbUDPData(rBuf, len, srcSockAddr, addrLen);
+
+	//     gbUDPDataHandler::Instance().Handle(ud);
+	// }
+	// else
+	// {
+	//     gbLog::Instance().Error((gbString)"recvfrom err@" + strerror(errno));
+	//     gbSAFE_DELETE(srcSockAddr);
+	// }
 
     }
     else if (what & EV_WRITE)
@@ -210,9 +246,21 @@ void gbSvrNet::_ev_cb(evutil_socket_t fd, short what, void* arg)
 
 void gbSvrNet::_listener_cb(evconnlistener* listener, evutil_socket_t sock, sockaddr* addr, int socklen, void* ptr)
 {
+    gbLog::Instance().Log("listener cb");
+    
     event_base* base = evconnlistener_get_base(listener);
     if(base != nullptr)
     {
+
+	std::unordered_map<evutil_socket_t, gbTCPSocketData*>& mpTCPSD = gbSvrNet::Instance()._mpTCPSocketDatas;
+	TCPSocketDataItr itr = mpTCPSD.find(sock);
+	if(itr == mpTCPSD.end())
+	{
+	    mpTCPSD.insert(std::pair<evutil_socket_t, gbTCPSocketData*>(sock, new gbTCPSocketData(sock)));
+	}
+	else
+	    ;//?odd
+	    
 	event* ev = event_new(base, sock, EV_READ | EV_WRITE | EV_PERSIST | EV_ET, _ev_cb, NULL);
 	event_add(ev, NULL);
     }
