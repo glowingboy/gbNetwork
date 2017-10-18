@@ -1,7 +1,7 @@
 #include "gbTCPPkgHandler.h"
 #include "gbSvrNet.h"
 #include "gbSvrLogic.h"
-gbTCPPkgActorMsg::gbTCPPkgActorMsg(gbTCPRawData* data):
+gbTCPPkgActorMsg::gbTCPPkgActorMsg(gbTCPPkgHandlerData* data):
     _data(data),
     _processed(false)
 {}
@@ -15,7 +15,7 @@ gbTCPPkgActorMsg::gbTCPPkgActorMsg(const gbTCPPkgActorMsg & other):
 
 gbTCPPkgActorMsg::~gbTCPPkgActorMsg()
 {
-    gbSAFE_DELETE(_data);
+    
 }
 
 void gbTCPPkgActorMsg::Process(const unsigned int actorIdx)
@@ -27,29 +27,91 @@ void gbTCPPkgActorMsg::Process(const unsigned int actorIdx)
     //using gbSerializeactordispatcher, then all datas with same socket will be handled sequencially, and there is no more need lock operation
     
 //    std::lock_guard<std::mutex> lck(_data->socketData->GetMtx());
-    
-    unsigned int lenData = _data->length;
-    unsigned char* data = _data->data;
-    std::vector<unsigned char>& remainder = _data->socketData->GetRemainderData();
 
-    if(remainder.size() != 0)
+    if(_data->GetType() == gbTCPPkgHandlerDataType::READ)
     {
-	remainder.insert(remainder.end(), data, data + lenData);
-	data = remainder.data();
-	lenData = remainder.size();
+	_readProcess(actorIdx);
     }
-    
+    else
+	_writeProcess(actorIdx);
+
+}
+
+void gbTCPPkgActorMsg::_readProcess(const unsigned int actorIdx)
+{
+    gbTCPSocketData* socketData = _data->GetTCPSocketData();
+    std::vector<unsigned char>& remainder = socketData->GetRemainderData();
+    unsigned char* buffer = socketData->GetRecvBuffer();
+    unsigned int lenRcv = 0;
+    gb_socket_t socket = socketData->GetSocket();
+
+    //read all avaliable data
+    for(;;)
+    {
+	lenRcv = recv(socket, buffer, gb_TCPPKG_MAX_SIZE, 0);
+	if(lenRcv == -1)
+	{
+	    gbLog::Instance().Error("recv error");
+	    return;
+	}
+	//todo, optimaize data copy
+	remainder.insert(remainder.end(), buffer, buffer + lenRcv);
+	if(lenRcv < gb_TCPPKG_MAX_SIZE)
+	    break;
+    }
+
+    unsigned char* data = remainder.data();
+    unsigned int lenData = remainder.size();
+
     for(;;)
     {
 	tcpPkgLen len = *(tcpPkgLen*)data;
 	static char sizeofTcpPkgLen = sizeof(tcpPkgLen);
 	if(lenData >= (len + sizeofTcpPkgLen))
 	{
-	    gbAppPkg::Handle(data, len, _data->socketData->GetSocket(), gbSvrLogic::Instance().GetLNASubState(actorIdx));
+	    gbAppPkg::Handle(data, len, socketData->GetSocket(), gbSvrLogic::Instance().GetLNASubState(actorIdx));
+	    data = data + len;
+	    lenData = lenData - len;
+	}
+	else
+	    break;
+    }
+    
+}
+void gbTCPPkgActorMsg::_writeProcess(const unsigned int actorIdx)
+{
+    gbTCPSocketData* socketData = _data->GetTCPSocketData();
+    std::queue<gb_array<unsigned char>>& qSendBuffer = socketData->GetSendBuffer();
+    if(_data->GetType() == gbTCPPkgHandlerDataType::WRITABLE)
+	socketData->SetWritable(true);
+    else// new writedata
+	qSendBuffer.push(_data->GetSendData());
+
+    bool writable = socketData->GetWritable();
+
+    gb_socket_t socket = socketData->GetSocket();
+    gb_array<unsigned char> sd;
+    unsigned int length;
+
+    //write as much as possible
+    while(writable && !qSendBuffer.empty())
+    {
+	sd = qSendBuffer.front();
+	length = sd.length;
+	if(send(socket, sd.data, sd.length, 0) != length)
+	{
+	    gbLog::Instance().Log("send err");
+	    writable = false;
+	    socketData->SetWritable(false);
+	}
+	else
+	{
+	    gbSAFE_DELETE_ARRAY(sd.data);
+	    qSendBuffer.pop();
 	}
     }
-
 }
+
 
 gbTCPPkgHandler::~gbTCPPkgHandler()
 {
@@ -68,8 +130,20 @@ void gbTCPPkgHandler::Initialize(unsigned int num)
 }
 
 
-void gbTCPPkgHandler::Handle(gbTCPRawData* rData)
+void gbTCPPkgHandler::Handle(const gbTCPPkgHandlerDataType type, gb_socket_t socket, gb_array<unsigned char>* sendData)
 {
-    gbTCPPkgActorMsg* msg = new gbTCPPkgActorMsg(rData);
+    TCPSocketDataItr itr = _mpTCPSocketDatas.find(socket);
+    gbTCPSocketData* socketData;
+    if(itr != _mpTCPSocketDatas.end())
+    {
+	socketData = itr->second;
+    }
+    else
+    {
+	socketData = new gbTCPSocketData(socket);
+	_mpTCPSocketDatas.insert(std::pair<gb_socket_t, gbTCPSocketData*>(socket, socketData));
+    }
+    gbTCPPkgHandlerData* hd = new gbTCPPkgHandlerData(type, socketData, sendData);
+    gbTCPPkgActorMsg* msg = new gbTCPPkgActorMsg(hd);
     _handler->Send(msg, _rcvAddr, _dispatcherAddr);
 }

@@ -37,6 +37,7 @@ private:
     void _handler(const MsgType & msg, const Theron::Address from)
 	{
 	    (const_cast<MsgType&>(msg))->Process(_idx);
+	    (const_cast<MsgType&>(msg))->SetProcessed();
 	    Send(msg, from);
 	}
 };

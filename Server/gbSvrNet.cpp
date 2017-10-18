@@ -186,38 +186,29 @@ void gbSvrNet::_ev_cb(evutil_socket_t fd, short what, void* arg)
 {
     if(what & EV_READ)
     {
-	std::unordered_map<evutil_socket_t, gbTCPSocketData*>& mpTCPSD = gbSvrNet::Instance()._mpTCPSocketDatas;
-	TCPSocketDataItr itr = mpTCPSD.find(fd);
-	if(itr != mpTCPSD.end())
-	{
-	    gbTCPSocketData * sd = itr->second;
-	    gbTCPRawData * rd = new gbTCPRawData;
-	    rd->socketData = sd;
-	    rd->data = new unsigned char[gb_TCPPKG_MAX_SIZE]{'\0'};
-	    rd->length = recv(fd, rd->data, gb_TCPPKG_MAX_SIZE, 0);
-	    if(rd->length != -1)
-	    {
-		gbTCPPkgHandler::Instance().Handle(rd);
-	    }
-	    else
-	    {
-		gbLog::Instance().Error("recv error");
-		gbSAFE_DELETE(rd);
-	    }
-	    // std::vector<unsigned char>& remainder = sd->GetRemainderData();
-	    // for(;;)
-	    // {
-	    // 	static unsigned char buffer[gb_TCPPKG_MAX_SIZE] = {'\0'};
-	    // 	static unsigned int lenRcv = 0;
-	    // 	lenRcv = recv(fd, buffer, gb_TCPPKG_MAX_SIZE, 0);
-	    // 	remainder.insert(remainder.end(), buffer, buffer + lenRcv);
-	    // 	if(lenRcv < gb_TCPPKG_MAX_SIZE)
-	    // 	    break;
-	    // }
-	    
-	}
-	else
-	    gbLog::Instance().Error("itr nullptr");
+	gbTCPPkgHandler::Instance().Handle(fd);
+	
+	// std::unordered_map<evutil_socket_t, gbTCPSocketData*>& mpTCPSD = gbSvrNet::Instance()._mpTCPSocketDatas;
+	// TCPSocketDataItr itr = mpTCPSD.find(fd);
+	// if(itr != mpTCPSD.end())
+	// {
+	//     gbTCPSocketData * sd = itr->second;
+	//     gbTCPRawData * rd = new gbTCPRawData;
+	//     rd->socketData = sd;
+	//     rd->data = new unsigned char[gb_TCPPKG_MAX_SIZE]{'\0'};
+	//     rd->length = recv(fd, rd->data, gb_TCPPKG_MAX_SIZE, 0);
+	//     if(rd->length != -1)
+	//     {
+	// 	gbTCPPkgHandler::Instance().Handle(rd);
+	//     }
+	//     else
+	//     {
+	// 	gbLog::Instance().Error("recv error");
+	// 	gbSAFE_DELETE(rd);
+	//     }
+//	}
+	//  else
+	//  gbLog::Instance().Error("itr nullptr");
 	
 	// sockaddr* srcSockAddr = new sockaddr;
 	// static socklen_t addrLen = sizeof(sockaddr);
@@ -252,14 +243,14 @@ void gbSvrNet::_listener_cb(evconnlistener* listener, evutil_socket_t sock, sock
     if(base != nullptr)
     {
 
-	std::unordered_map<evutil_socket_t, gbTCPSocketData*>& mpTCPSD = gbSvrNet::Instance()._mpTCPSocketDatas;
-	TCPSocketDataItr itr = mpTCPSD.find(sock);
-	if(itr == mpTCPSD.end())
-	{
-	    mpTCPSD.insert(std::pair<evutil_socket_t, gbTCPSocketData*>(sock, new gbTCPSocketData(sock)));
-	}
-	else
-	    ;//?odd
+	// std::unordered_map<evutil_socket_t, gbTCPSocketData*>& mpTCPSD = gbSvrNet::Instance()._mpTCPSocketDatas;
+	// TCPSocketDataItr itr = mpTCPSD.find(sock);
+	// if(itr == mpTCPSD.end())
+	// {
+	//     mpTCPSD.insert(std::pair<evutil_socket_t, gbTCPSocketData*>(sock, new gbTCPSocketData(sock)));
+	// }
+	// else
+	//     ;//?odd
 	    
 	event* ev = event_new(base, sock, EV_READ | EV_WRITE | EV_PERSIST | EV_ET, _ev_cb, NULL);
 	event_add(ev, NULL);

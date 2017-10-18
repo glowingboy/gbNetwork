@@ -10,22 +10,8 @@
 #include <thread>
 #include <mutex>
 #include <vector>
-#include <unordered_map>
+//#include <unordered_map>
 
-class gbTCPSocketData
-{
-public:
-    inline gbTCPSocketData(const evutil_socket_t socket):
-	_socket(socket)
-	{}
-    inline std::mutex& GetMtx(){ return _mtx; }
-    inline std::vector<unsigned char>& GetRemainderData(){ return _remainderData; }
-    inline evutil_socket_t GetSocket() { return _socket; }
-private:
-    std::mutex _mtx;
-    std::vector<unsigned char> _remainderData;
-    const evutil_socket_t _socket;
-};
 
 class gbSvrNet
 {
@@ -45,8 +31,6 @@ private:
     evconnlistener* _listener;
     evconnlistener* _watchdog_listener;
     std::thread* _dispathThread;
-    typedef std::unordered_map<evutil_socket_t, gbTCPSocketData*>::iterator TCPSocketDataItr;
-    std::unordered_map<evutil_socket_t, gbTCPSocketData*> _mpTCPSocketDatas;
 private:
     //controlled by watchdog
     void Shutdown();
