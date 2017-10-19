@@ -91,23 +91,36 @@ void gbTCPPkgActorMsg::_writeProcess(const unsigned int actorIdx)
 
     gb_socket_t socket = socketData->GetSocket();
     gb_array<unsigned char> sd;
-    unsigned int length;
-
+    unsigned int lenData;
+    unsigned char* data;
+    unsigned int sentLen;
     //write as much as possible
     while(writable && !qSendBuffer.empty())
     {
 	sd = qSendBuffer.front();
-	length = sd.length;
-	if(send(socket, sd.data, sd.length, 0) != length)
+	lenData = sd.length;
+	data = sd.data;
+
+	//send until lenData == 0, else error happenned
+	while(lenData != 0)
+	{
+	    sentLen = send(socket, data, lenData, 0);
+	    if(sentLen == -1)
+		break;
+	    lenData = lenData - sentLen;
+	    data = data + sentLen;
+	}
+
+	if(lenData == 0)
+	{
+	    gbSAFE_DELETE_ARRAY(data);
+	    qSendBuffer.pop();
+	}
+	else
 	{
 	    gbLog::Instance().Log("send err");
 	    writable = false;
 	    socketData->SetWritable(false);
-	}
-	else
-	{
-	    gbSAFE_DELETE_ARRAY(sd.data);
-	    qSendBuffer.pop();
 	}
     }
 }

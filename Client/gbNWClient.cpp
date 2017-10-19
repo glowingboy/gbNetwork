@@ -5,7 +5,17 @@
 #include "Log/gbLog.h"
 #include "String/gbString.h"
 
-bool gbNWClient::Initialize(const unsigned short watchdogPort)
+bool gbBaseClient::Initialize()
+{
+    #ifdef _DEBUG
+    event_enable_debug_mode();
+#endif
+    
+    event_set_log_callback(_log_callback);
+    event_set_fatal_callback(_fatal_error_callback);
+
+}
+bool gbBaseClient::Setup()
 {
     _socket = socket(AF_INET, SOCK_STREAM | SOCK_NONBLOCK, 0);
 
@@ -14,13 +24,6 @@ bool gbNWClient::Initialize(const unsigned short watchdogPort)
 	gbLog::Instance().Error(gbString("sockfd create err@") + strerror(errno));
 	return false;
     }
-
-#ifdef _DEBUG
-    event_enable_debug_mode();
-#endif
-    
-    event_set_log_callback(_log_callback);
-    event_set_fatal_callback(_fatal_error_callback);
 
     event_config* cfg = event_config_new();
     if(cfg == nullptr)
@@ -33,13 +36,36 @@ bool gbNWClient::Initialize(const unsigned short watchdogPort)
     if (_evBase == nullptr)
 	return false;
 
-    _ev = event_new(_evBase, _socket, EV_READ | EV_WRITE | EV_PERSIST | EV_ET, _ev_cb, this);
+    _ev = event_new(_evBase, _socket, EV_READ | EV_WRITE | EV_ET, _ev_cb, this);
     if(_ev == nullptr)
 	return false;
     
     event_add(_ev, NULL);
 
-    //watchdog
+
+    return true;
+}
+
+void gbBaseClient::Connect(const char* szIP, const unsigned short port)
+{
+    sockaddr_in svrAddr;
+    memset(&svrAddr, 0, sizeof(svrAddr));
+    svrAddr.sin_family = AF_INET;
+    svrAddr.sin_addr.s_addr = inet_addr(szIP);
+    svrAddr.sin_port = htons(port);
+
+    connect(_socket, (struct sockaddr*)&svrAddr, sizeof(svrAddr));
+
+    _dispatchThread = new std::thread([&]()
+    				      {
+    					  event_base_dispatch(_evBase);
+    				      });
+}
+
+
+bool gbAdvancedClient::Setup()
+{
+        //watchdog
     //wd svr
     _watchdogSvrSocket = socket(AF_INET, SOCK_STREAM | SOCK_NONBLOCK, 0);
 
@@ -71,15 +97,7 @@ bool gbNWClient::Initialize(const unsigned short watchdogPort)
     
     connect(_watchdogClntSocket, (struct sockaddr*)&watchdogAddr, sizeof(watchdogAddr));
 
-    _dispatchThread = new std::thread([&]()
-				      {
-					  event_base_dispatch(_evBase);
-				      }
-	);
-
-    return true;
 }
-
 void gbNWClient::Connect(const char* szIP, const unsigned short port)
 {
     sockaddr_in svrAddr;
@@ -106,6 +124,57 @@ void gbNWClient::Close()
     
     gbSAFE_DELETE(_dispatchThread);
 }
+
+void gbNWClient::Send(gb_send_pkg* sPkg)
+{
+    {
+	std::lock_guard<std::mutex> lck(_sendCVMtx);
+	_qSendPkg.push(sPkg);
+    }
+    
+    _sendCV.notify_one();
+}
+
+void gbNWClient::_send_thread(gbNWClient* clnt)
+{
+    std::mutex& sendCVMtx = clnt->_sendCVMtx;
+    std::queue<gb_send_pkg*>& qSendPkg = clnt->_qSendPkg;
+    bool & writable = clnt->_writable;
+    std::condition_variable& cv = clnt->_sendCV;
+    unsigned int sentLen;
+    std::unique_lock<std::mutex> lck(sendCVMtx);
+    gb_socket_t socket;
+    for(;;)
+    {
+	cv.wait(lck, [&]()->bool
+		{
+		    return  writable && qSendPkg.size() > 0;
+		});
+	
+	gb_send_pkg* pkg = qSendPkg.front();
+	lck.unlock();
+	unsigned int lenData = pkg->data.length;
+	const unsigned char* data = pkg->data.data;
+	socket = pkg->socket;
+	while(lenData != 0)
+	{
+	    sentLen = send(socket, data, lenData, 0);
+	    if(sentLen == -1)
+		break;
+	    else
+	    {
+		lenData = lenData - sentLen;
+		data = data + sentLen;
+	    }
+	}
+
+	lck.lock();
+	if(lenData == 0)
+	    qSendPkg.pop();
+	else
+	    writable = false;
+    }
+}
 void gbNWClient::_log_callback(int severity, const char* msg)
 {
 	gbLog::Instance().Log(gbString("severity:") + severity + ", msg:");
@@ -126,7 +195,11 @@ void gbNWClient::_ev_cb(evutil_socket_t fd, short what, void* arg)
     }
     else if( what & EV_WRITE)
     {
-	gbLog::Instance().Log("EV_WRITE");
+	{
+	    std::lock_guard<std::mutex> lck(clnt->_sendCVMtx);
+	    clnt->_writable = true;
+	}
+	clnt->_sendCV.notify_one();
     }
     else if( what & EV_PERSIST)
     {

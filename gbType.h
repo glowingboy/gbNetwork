@@ -27,3 +27,10 @@ struct gb_callback
 {
     virtual void exe(void*);
 };
+
+struct gb_send_pkg
+{
+    gb_socket_t socket;
+    gb_array<unsigned char> data;
+    gb_callback cb;
+};
