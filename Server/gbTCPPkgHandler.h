@@ -7,6 +7,7 @@
 #include "gbActor.h"
 #include "../gbTCPPkg.h"
 #include "gbSvrNet.h"
+#include <unordered_map>
 
 class gbTCPSocketData
 {
@@ -23,6 +24,17 @@ public:
     inline void SetWritable(bool bState) { _writable = bState; }
     inline bool GetWritable() { return _writable; }
     inline std::queue<gb_array<unsigned char>>& GetSendBuffer() { return _qSendBuffer; }
+    inline gbAppPkgCallback* GetCallbackTarget(const unsigned int key)
+	{
+	    std::unordered_map<unsigned int, gbAppPkgCallback*>::iterator itr = _callbackRegister.find(key);
+	    if(itr != _callbackRegister.end())
+		return itr->second;
+	    else
+		return nullptr;
+	}
+    inline gb_array<unsigned char>& GetCurAppPkgData() { return _curAppPkgData; }
+    inline unsigned int GetCurActorIdx() { return _curActorIdx; }
+    inline void SetCurActorIdx(const unsigned int idx) { _curActorIdx = idx; }
 private:
     std::mutex _mtx;
     std::vector<unsigned char> _remainderData;
@@ -31,6 +43,12 @@ private:
 
     std::queue<gb_array<unsigned char>> _qSendBuffer;
     bool _writable;
+
+    std::unordered_map<unsigned int, gbAppPkgCallback*> _callbackRegister;
+
+    gb_array<unsigned char> _curAppPkgData;
+    
+    unsigned int _curActorIdx;
 };
 
 

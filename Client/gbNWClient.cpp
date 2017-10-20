@@ -7,7 +7,7 @@
 
 bool gbBaseClient::Initialize()
 {
-    #ifdef _DEBUG
+#ifdef _DEBUG
     event_enable_debug_mode();
 #endif
     
@@ -18,7 +18,7 @@ bool gbBaseClient::Initialize()
 bool gbBaseClient::Setup()
 {
     _socket = socket(AF_INET, SOCK_STREAM | SOCK_NONBLOCK, 0);
-
+    
     if(_socket == -1)
     {
 	gbLog::Instance().Error(gbString("sockfd create err@") + strerror(errno));

@@ -44,7 +44,8 @@ void gbTCPPkgActorMsg::_readProcess(const unsigned int actorIdx)
     unsigned char* buffer = socketData->GetRecvBuffer();
     unsigned int lenRcv = 0;
     gb_socket_t socket = socketData->GetSocket();
-
+    gb_array<unsigned char>& curAppPkgData = socketData->GetCurAppPkgData();
+    
     //read all avaliable data
     for(;;)
     {
@@ -69,13 +70,18 @@ void gbTCPPkgActorMsg::_readProcess(const unsigned int actorIdx)
 	static char sizeofTcpPkgLen = sizeof(tcpPkgLen);
 	if(lenData >= (len + sizeofTcpPkgLen))
 	{
-	    gbAppPkg::Handle(data, len, socketData->GetSocket(), gbSvrLogic::Instance().GetLNASubState(actorIdx));
+	    curAppPkgData.data = data;
+	    curAppPkgData.length = len;
+	    socketData->SetCurActorIdx(actorIdx);
+	    gbAppPkg::Handle(socketData);
 	    data = data + len;
 	    lenData = lenData - len;
 	}
 	else
 	    break;
     }
+
+    remainder.erase(remainder.begin(), remainder.end() - lenData);
     
 }
 void gbTCPPkgActorMsg::_writeProcess(const unsigned int actorIdx)

@@ -119,16 +119,31 @@
 // // }
 #include "gbAppPkg.h"
 #include "LuaCPP/gbLuaCPP.h"
+#include "Log/gbLog.h"
+#include "gbTCPPkgHandler.h"
 
-void gbAppPkg::Handle(unsigned char* data, const unsigned int size, const gb_socket_t socket, lua_State* l)
+void gbAppPkg::Handle(gbTCPSocketData* data)
 {
-    char type = *(char*)data;
-    if(type == 'X')
-    {
-	gbLuaCPP_dostring(l, (char*)(data + 1));
-    }
-    else if(type == 'T')
-    {
+    // char type = *(char*)data;
+    // if(type == 'X')
+    // {
+    // 	gbLuaCPP_dostring(l, (char*)(data + 1));
+    // }
+    // else if(type == 'T')
+    // {
 	
-    }
+    // }
+    gb_array<unsigned char>& pkgData = data->GetCurAppPkgData();
+    unsigned char* rawData = pkgData.data;
+    const std::uint32_t callbackKey = *(std::uint32_t*)rawData;
+
+    gbAppPkgCallback* target = data->GetCallbackTarget(callbackKey);
+
+    if(target != nullptr)
+	target->callback(rawData + gb_APPPKG_CALLBACKTARGETKEY_SIZE);
+    else
+	gbLog::Instance().Error("gbAppPkgCallback target nullptr");
+    
+    //if(target->Validating())//absolute safty?, or using register lookup
+
 }

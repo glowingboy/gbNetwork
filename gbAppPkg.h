@@ -1,5 +1,6 @@
 #pragma once
 #include "gbType.h"
+#include <cstdint>
 
 // #include "gbCommon.h"
 // #include <mutex>
@@ -38,10 +39,26 @@
 //     static void Encode(const unsigned char* data, const unsigned int size, const unsigned char type);
 // };
 
-struct lua_State;
+/**
+   appPkg:4 bytes cpp_target key(std::uint32_t) + argument object
+*/
 
+#define gb_APPPKG_CALLBACKTARGETKEY_SIZE 4
+//#define gb_APPPKG_CALLBACK_MAGICNUMBER 42
+struct gbAppPkgCallback
+{
+public:
+    //  inline gbAppPkgCallback():_magicNumber(gb_APPPKG_CALLBACK_MAGICNUMBER){}
+    virtual void callback(void*);
+//    inline bool Validating(){return _magicNumber == gb_APPPKG_CALLBACK_MAGICNUMBER; }
+private:
+//    const unsigned char _magicNumber;
+};
+
+
+class gbTCPSocketData;
 class gbAppPkg
 {
 public:
-    static void Handle(unsigned char* data, const unsigned int size, const gb_socket_t socket, lua_State* l);
+    static void Handle(gbTCPSocketData* data);
 };
