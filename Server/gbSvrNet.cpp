@@ -2,7 +2,8 @@
 #include <unistd.h>
 #include <arpa/inet.h>
 //#include <fcntl.h>
-#include "gbTCPPkgHandler.h"
+#include "gbNWMessageDispatcher.h"
+
 //unsigned char gbSvrNet::_recvBuffer[gb_UDP_MAX_PACKET_SIZE] = {'\0'};
 //event_base* gbSvrNet::_base;
 
@@ -88,7 +89,7 @@ bool gbSvrNet::Start(const char* szLocalIP, const unsigned short port)
     	return false;
     }
 
-    _listener = evconnlistener_new(_base,_listener_cb, nullptr, LEV_OPT_CLOSE_ON_FREE, -1, _sockfd);
+    _listener = evconnlistener_new(_base,_listener_cb, this, LEV_OPT_CLOSE_ON_FREE, -1, _sockfd);
     evconnlistener_set_error_cb(_listener, _listener_error_cb);
     
 //    _ev = event_new(_base, _sockfd, EV_READ | EV_WRITE | EV_PERSIST | EV_ET, _ev_cb, NULL);
@@ -165,8 +166,8 @@ void gbSvrNet::_watchdog_ev_cb(evutil_socket_t fd, short what, void* arg)
 {
     if(what & EV_READ)
     {
-	sockaddr* srcSockAddr = new sockaddr;
-	static socklen_t addrLen = sizeof(sockaddr);
+	// sockaddr* srcSockAddr = new sockaddr;
+	// static socklen_t addrLen = sizeof(sockaddr);
 	// size_t len = recvfrom(fd, _recvBuffer, gb_UDP_MAX_PACKET_SIZE, 0, srcSockAddr, &addrLen);
 	// if(len != -1)
 	// {
@@ -186,7 +187,8 @@ void gbSvrNet::_ev_cb(evutil_socket_t fd, short what, void* arg)
 {
     if(what & EV_READ)
     {
-	gbTCPPkgHandler::Instance().Handle(fd);
+	gbNWMessageDispatcher::Instance().Dispatch(gbNWMessageType::READ, gbSocketDataMgr::Instance().GetSocketData(fd), nullptr);
+//	gbTCPPkgHandler::Instance().Handle(fd);
 	
 	// std::unordered_map<evutil_socket_t, gbTCPSocketData*>& mpTCPSD = gbSvrNet::Instance()._mpTCPSocketDatas;
 	// TCPSocketDataItr itr = mpTCPSD.find(fd);
@@ -238,6 +240,7 @@ void gbSvrNet::_ev_cb(evutil_socket_t fd, short what, void* arg)
 void gbSvrNet::_listener_cb(evconnlistener* listener, evutil_socket_t sock, sockaddr* addr, int socklen, void* ptr)
 {
     gbLog::Instance().Log("listener cb");
+    gbSvrNet* svrNet = reinterpret_cast<gbSvrNet*>(ptr);
     
     event_base* base = evconnlistener_get_base(listener);
     if(base != nullptr)
@@ -251,9 +254,12 @@ void gbSvrNet::_listener_cb(evconnlistener* listener, evutil_socket_t sock, sock
 	// }
 	// else
 	//     ;//?odd
-	    
+	
 	event* ev = event_new(base, sock, EV_READ | EV_WRITE | EV_PERSIST | EV_ET, _ev_cb, NULL);
 	event_add(ev, NULL);
+	svrNet->_lstEvs.push_back(ev);
+
+	
     }
 }
 

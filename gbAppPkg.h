@@ -56,9 +56,9 @@ private:
 };
 
 
-class gbTCPSocketData;
+class gbSocketData;
 class gbAppPkg
 {
 public:
-    static void Handle(gbTCPSocketData* data);
+    static void Handle(gbSocketData* data);
 };

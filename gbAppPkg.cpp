@@ -122,7 +122,7 @@
 #include "Log/gbLog.h"
 #include "gbTCPPkgHandler.h"
 
-void gbAppPkg::Handle(gbTCPSocketData* data)
+void gbAppPkg::Handle(gbSocketData* data)
 {
     // char type = *(char*)data;
     // if(type == 'X')

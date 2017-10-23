@@ -9,7 +9,7 @@
 //#include "gbUDPDataHandler.h"
 #include <thread>
 #include <mutex>
-#include <vector>
+#include <list>
 //#include <unordered_map>
 
 
@@ -26,7 +26,7 @@ private:
     evutil_socket_t _watchdogSockfd;
     // event* _ev;
     // event* _watchdogEv;
-    std::vector<event*> _evs;
+    std::list<event*> _lstEvs;
     event_base* _base;
     evconnlistener* _listener;
     evconnlistener* _watchdog_listener;

@@ -3,6 +3,8 @@
 #include "LuaCPP/gbLuaCPP.h"
 #include <String/gbString.h>
 
+#include "../gbType.h"
+
 #define gb_SVR_LOGIC_UDP_HANDLER_ACTOR_NUM 16
 
 class gbSvrLogic
@@ -17,6 +19,7 @@ public:
 	    else
 		return nullptr;
 	}
+//    void EventHandle(const gb_socket_t socket);
 private:
     gbString _workPath;
 
