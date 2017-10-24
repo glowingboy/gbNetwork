@@ -6,23 +6,29 @@
 #include "../gbType.h"
 
 #define gb_SVR_LOGIC_UDP_HANDLER_ACTOR_NUM 16
+#include "gbNWMessageDispatcher.h"
+enum gbSocketEventType
+{
+    NewConnection = 1,
+    Read, Write
+};
 
 class gbSvrLogic
 {
-    SingletonDeclare(gbSvrLogic);
+SingletonDeclare(gbSvrLogic);
 public:
-    bool Start();
-    inline lua_State* GetLNASubState(const unsigned int idx)
-	{
-	    if(idx < gb_SVR_LOGIC_UDP_HANDLER_ACTOR_NUM)
-		return _lnaSubState[idx];
-	    else
-		return nullptr;
-	}
-//    void EventHandle(const gb_socket_t socket);
+bool Start();
+inline lua_State* GetLNASubState(const unsigned int idx)
+{
+if(idx < gb_SVR_LOGIC_UDP_HANDLER_ACTOR_NUM)
+    return _lnaSubState[idx];
+else
+    return nullptr;
+}
+void EventHandle(const gb_socket_t socket, gbNWMessageType type);
 private:
-    gbString _workPath;
+gbString _workPath;
 
-    lua_State* _lnaState;
-    lua_State* _lnaSubState[gb_SVR_LOGIC_UDP_HANDLER_ACTOR_NUM];
+lua_State* _lnaState;
+lua_State* _lnaSubState[gb_SVR_LOGIC_UDP_HANDLER_ACTOR_NUM];
 };

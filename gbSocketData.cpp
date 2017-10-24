@@ -7,7 +7,7 @@ gbSocketData::gbSocketData(const gb_socket_t socket):
     _writable(false),
     _curCommAddr(0)
 {
-    _defaultComm = new gbCommunicator(this);
+    _defaultComm = new gbDefaultComm(this);
     if(_defaultComm == nullptr)
 	throw std::runtime_error("_defaultComm created error");
 }
@@ -23,9 +23,9 @@ gbSocketData::~gbSocketData()
     gbSAFE_DELETE(_defaultComm);
 }
 
-void gbSocketData::Send(gb_array<unsigned char>& msg)
+void gbSocketData::Send(gb_array<unsigned char>* msg)
 {
-    gbNWMessageDispatcher::Instance().Dispatch(gbNWMessageType::NEWWRITEDATA, this, &msg);   
+    gbNWMessageDispatcher::Instance().Dispatch(gbNWMessageType::NEWWRITEDATA, this, msg);   
 }
 
 gbCommunicatorAddr gbSocketData::RegisterCommunicator(gbCommunicator* comm)

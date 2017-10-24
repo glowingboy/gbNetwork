@@ -187,7 +187,7 @@ void gbSvrNet::_ev_cb(evutil_socket_t fd, short what, void* arg)
 {
     if(what & EV_READ)
     {
-	gbNWMessageDispatcher::Instance().Dispatch(gbNWMessageType::READ, gbSocketDataMgr::Instance().GetSocketData(fd), nullptr);
+	gbNWMessageDispatcher::Instance().Dispatch(gbNWMessageType::READABLE, gbSocketDataMgr::Instance().GetSocketData(fd), nullptr);
 //	gbTCPPkgHandler::Instance().Handle(fd);
 	
 	// std::unordered_map<evutil_socket_t, gbTCPSocketData*>& mpTCPSD = gbSvrNet::Instance()._mpTCPSocketDatas;
@@ -245,7 +245,7 @@ void gbSvrNet::_listener_cb(evconnlistener* listener, evutil_socket_t sock, sock
     event_base* base = evconnlistener_get_base(listener);
     if(base != nullptr)
     {
-
+	
 	// std::unordered_map<evutil_socket_t, gbTCPSocketData*>& mpTCPSD = gbSvrNet::Instance()._mpTCPSocketDatas;
 	// TCPSocketDataItr itr = mpTCPSD.find(sock);
 	// if(itr == mpTCPSD.end())

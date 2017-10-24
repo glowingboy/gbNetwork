@@ -18,7 +18,7 @@ class gbSvrNet
     SingletonDeclare(gbSvrNet);
 public:
     bool Start(const char* szLocalIP, unsigned short port);
-
+    
 private:
     bool _is_little_endian;
     //  static unsigned char _recvBuffer[gb_UDP_MAX_PACKET_SIZE];

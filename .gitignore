@@ -33,3 +33,6 @@
 
 build/
 *~
+
+# protobuf generating files
+*.pb.*

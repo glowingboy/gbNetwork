@@ -37,3 +37,9 @@ bool gbSvrLogic::Start()
 
     return true;
 }
+
+void gbSvrLogic::EventHandle(const gb_socket_t socket, gbNWMessageType type)
+{
+    gbNWMessageDispatcher::Instance().Dispatch(type, gbSocketDataMgr::Instance().GetSocketData(socket), nullptr);
+
+}

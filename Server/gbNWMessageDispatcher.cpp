@@ -4,11 +4,10 @@
 
 gbNWMessageDispatcher::Msg::Msg(const gbNWMessageType type, gbSocketData* socketData, gb_array<unsigned char>* sendData):
     _type(type),
+    _sendData(sendData),
     _socketData(socketData),
     _processed(false)
 {
-    if(sendData != nullptr)
-	_sendData = *sendData;
 }
 
 gbNWMessageDispatcher::Msg::Msg(const Msg & other):
@@ -36,14 +35,22 @@ void gbNWMessageDispatcher::Msg::Process(const unsigned int actorIdx)
     //using gbSerializeactordispatcher, then all datas with same socket will be handled sequencially, and there is no more need lock operation
     
 //    std::lock_guard<std::mutex> lck(_data->socketData->GetMtx());
-
-    if(_type == gbNWMessageType::READ)
+    if(_type == gbNWMessageType::CONNECTED)
+    {
+	_connectProcess(actorIdx);
+    }
+    else if(_type == gbNWMessageType::READABLE)
     {
 	_readProcess(actorIdx);
     }
     else
 	_writeProcess(actorIdx);
 
+}
+
+void gbNWMessageDispatcher::Msg::_connectProcess(const unsigned int actorIdx)
+{
+    
 }
 
 void gbNWMessageDispatcher::Msg::_readProcess(const unsigned int actorIdx)
@@ -83,18 +90,23 @@ void gbNWMessageDispatcher::Msg::_readProcess(const unsigned int actorIdx)
 	    // curAppPkgData.length = len;
 	    // socketData->SetCurActorIdx(actorIdx);
 	    // gbAppPkg::Handle(socketData);
-	    static char sizeofCommunicatorAddr = sizeof(gbCommunicatorAddr);
-	    if(len >= sizeofCommunicatorAddr)
+	    if(len >= gbCOMM_MSG_PKG_HEADERSIZE)
 	    {
-		gbCommunicatorAddr addr = *(gbCommunicatorAddr*)data;
-		gbCommunicator* comm = _socketData->GetCommunicator(addr);
+		gbCommunicatorAddr* addr = (gbCommunicatorAddr*)data;
+		
+		gbCommunicator* comm = _socketData->GetCommunicator(addr[0]);
 		if(comm != nullptr)
-		    comm->Recv(gb_array<unsigned char>(data, len));
+		{
+		    gb_array<unsigned char>* rawDataArray = new gb_array<unsigned char>;
+		    rawDataArray->CopyFrom(data + gbCOMM_MSG_PKG_HEADERSIZE, len - gbCOMM_MSG_PKG_HEADERSIZE);
+		    comm->Recv(addr[1], rawDataArray);
+		    
+		}
 		else
 		    gbLog::Instance().Error("gbCommunicator is nullptr");
 	    }
 	    else
-		gbLog::Instance().Error("len < sizeofCommunicatorAddr");
+		gbLog::Instance().Error("len < gbCOMM_MSG_PKG_HEADERSIZE");
 	    
 	    data = data + len;
 	    lenData = lenData - len;
@@ -109,7 +121,7 @@ void gbNWMessageDispatcher::Msg::_readProcess(const unsigned int actorIdx)
 void gbNWMessageDispatcher::Msg::_writeProcess(const unsigned int actorIdx)
 {
 //    gbSocketData* socketData = _data->GetTCPSocketData();
-    std::queue<gb_array<unsigned char>>& qSendBuffer = _socketData->GetSendDataQueue();
+    std::queue<gb_array<unsigned char>*>& qSendBuffer = _socketData->GetSendDataQueue();
     if(_type == gbNWMessageType::WRITABLE)
 	_socketData->SetWritable(true);
     else// new writedata
@@ -118,7 +130,7 @@ void gbNWMessageDispatcher::Msg::_writeProcess(const unsigned int actorIdx)
     bool writable = _socketData->GetWritable();
 
     gb_socket_t socket = _socketData->GetSocket();
-    gb_array<unsigned char> sd;
+    gb_array<unsigned char>* sd;
     unsigned int lenData;
     unsigned char* data;
     unsigned int sentLen;
@@ -126,8 +138,8 @@ void gbNWMessageDispatcher::Msg::_writeProcess(const unsigned int actorIdx)
     while(writable && !qSendBuffer.empty())
     {
 	sd = qSendBuffer.front();
-	lenData = sd.length;
-	data = sd.data;
+	lenData = sd->length;
+	data = sd->data;
 
 	//send until lenData == 0, else error happenned
 	while(lenData != 0)
@@ -141,7 +153,7 @@ void gbNWMessageDispatcher::Msg::_writeProcess(const unsigned int actorIdx)
 
 	if(lenData == 0)
 	{
-	    gbSAFE_DELETE_ARRAY(data);
+	    gbSAFE_DELETE_ARRAY(sd);
 	    qSendBuffer.pop();
 	}
 	else

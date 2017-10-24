@@ -45,6 +45,23 @@ macro(gb_add_class clsName dir)
   
 endmacro()
 
+macro(gb_add_allfiles_indir dir)
+  set(full_dir ${CMAKE_CURRENT_SOURCE_DIR}/${dir})
+    message("srcs:" ${srcs})
+  file(GLOB srcs ../CommMsg
+    "*.cpp"
+    "*.h"
+    "*.cc"
+    )
+  message("full_dir" ${full_dir})
+  message("srcs:" ${srcs})
+  foreach(src IN LISTS ${srcs})
+    message("src@" ${src} " added")
+  endforeach()
+  set(gb_server_srcs ${gb_server_srcs} ${srcs})
+endmacro()
+
+
 gb_add_class(gbServer .)
 gb_add_class(gbSvrNet .)
 gb_add_class(gbSvrUsr Core)
@@ -63,6 +80,10 @@ gb_add_class(gbCommunicator ..)
 gb_add_class(gbType ..)
 gb_add_class(gbNWMessageDispatcher .)
 gb_add_class(gbSocketData ..)
+
+# adding CommMsg
+gb_add_allfiles_indir(../CommMsg/)
+
 add_executable(gbServer
   ${gb_server_srcs} ${gb_server_headers}
   )
@@ -97,6 +118,7 @@ target_link_libraries(gbServer
   ${ws2_32_lib}
   ${pthread_lib}
   dl
+  protobuf-lite
   )
 
 

@@ -1,5 +1,6 @@
 #pragma once
 #include "gbCommon.h"
+#include <cstring>
 #ifdef _MSC_VER
 #define gb_socket_t intptr_t
 #else
@@ -31,6 +32,13 @@ struct gb_array
 	{
 	    data = other.data;
 	    length = other.length;
+	}
+    void CopyFrom(T* _data, const unsigned int len)
+	{
+	    gbSAFE_DELETE_ARRAY(data);
+	    data = new T[len];
+	    memcpy(_data, data, len);
+	    length = len;
 	}
     T* data;
     unsigned int length;

@@ -67,8 +67,8 @@
 
 enum gbNWMessageType
 {
-    READ = 1,
-    WRITABLE, NEWWRITEDATA
+    CONNECTED = 1,
+    READABLE, WRITABLE, NEWWRITEDATA, DISCONNECTED
 };
 
 class gbNWMessageDispatcher
@@ -108,11 +108,12 @@ private:
 //	MsgData* _data;
 
 	const gbNWMessageType _type;
-	gb_array<unsigned char> _sendData;
+	gb_array<unsigned char>* _sendData;
 	gbSocketData* _socketData;
 
 	bool _processed;
     private:
+	void _connectProcess(const unsigned int actorIdx);
 	void _readProcess(const unsigned int actorIdx);
 	void _writeProcess(const unsigned int actorIdx);
     };

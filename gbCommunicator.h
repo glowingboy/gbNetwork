@@ -1,15 +1,34 @@
 #pragma once
 #include "gbType.h"
 
+
+
+
 typedef unsigned int gbCommunicatorAddr;
 typedef unsigned char gbMessageType;
 
-struct gbCommunicatorMsg
-{
-    gb_array<unsigned char> Serialize()const;
-};
+/**
+   gbCommunicator msg pkg memory layout
+
+   |1st HEADER{1st: dst addr|2nd: src addr}|2nd: MSG|
+*/
+
+static int gbCOMM_MSG_PKG_HEADERSIZE = 2 * sizeof(gbCommunicatorAddr);
+
+#include <google/protobuf/message_lite.h>
+typedef ::google::protobuf::MessageLite gbCommunicatorMsg;
 
 class gbSocketData;
+
+#define gbCommMsgBegin(MsgType, var, rawDataArray)			\
+    {							\
+    MsgType var;					\
+    var.ParseFromArray(rawDataArray->data, rawDataArray->length); 
+
+#define gbCommMsgEnd(rawDataArray)				\
+    gbSAFE_DELETE(rawDataArray)				\
+    }
+
 
 class gbCommunicator
 {
@@ -18,36 +37,11 @@ public:
     inline virtual ~gbCommunicator(){}
     //unconnected method, maybe connected method, like connect to dest first, and then just send?
     void SendTo(const gbCommunicatorAddr dstAddr, const gbCommunicatorMsg& msg);
-    virtual void Recv(gb_array<unsigned char> data);
+    virtual void Recv(const gbCommunicatorAddr fromAddr, gb_array<unsigned char>* rawDataArray) = 0;
     
     //void SubscribeMessage(const gbCommunicatorAddr dstAddr, const messageType msgType);//can be implemented based on sendto
 
 private:
     gbCommunicatorAddr _addr;//initialize with 0
     gbSocketData* _socketData;
-private:
-
-    void _encode();
-    gbCommunicatorAddr _decode();
 };
-
-//sample
-// struct gbMyRole:gbCommunicator
-// {
-//     char* name;
-//     int hp;
-//     int mp;
-
-//     void move(unsigned int delta)
-// 	{
-// 	    SendTo(...);
-// 	}
-
-//     virtual void Recv(void* argObj) override
-// 	{
-// 	    gbCommunicatorAddr otherSide = Recv();
-
-
-// 	    SendTo(otherSide, ...);
-// 	}
-// };
