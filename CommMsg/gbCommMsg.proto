@@ -1,0 +1,35 @@
+syntax = "proto2";
+
+option optimize_for = LITE_RUNTIME;
+
+message gbCommMsgString
+{
+	optional string val = 1;
+}
+
+message gbCommMsgInt32
+{
+	optional int32 val = 1;
+}
+
+message gbCommMsgFloat
+{
+	optional float val = 1;
+}
+
+message gbCommMsgBool
+{
+	optional bool val = 1;
+}
+
+message gbCommMsgString_UInt32
+{
+	optional string strVal;
+	optional uint32 uint32Val;
+}
+
+message gbCommMsgReceptionist
+{
+	optional uint32 code = 1;
+	repeated gbCommMsgString_UInt32 addrInfo = 2;
+}

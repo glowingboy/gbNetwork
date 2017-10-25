@@ -1,8 +1,0 @@
-syntax = "proto2";
-
-option optimize_for = LITE_RUNTIME;
-
-message gbDefaultCommMsg
-{
-	optional string msg = 1;
-}

@@ -4,7 +4,7 @@
 #include "String/gbString.h"
 #include <string>
 
-#include "CommMsg/gbDefaultCommMsg.pb.h"
+#include "CommMsg/gbCommMsg.pb.h"
 
 class gbDefaultComm: public gbCommunicator
 {
@@ -14,7 +14,7 @@ public:
 	{}
     inline virtual void Recv(const gbCommunicatorAddr fromAddr, gb_array<unsigned char>* rawDataArray) override
 	{
-	    gbCommMsgBegin(gbDefaultCommMsg, msg, rawDataArray);
+	    gbCommMsgBegin(gbCommMsgString, msg, rawDataArray);
 	    std::string strMsg;
 	    msg.SerializeToString(&strMsg);
 	    
@@ -24,7 +24,9 @@ public:
 // msg as string: \n
 // " + strMsg.c_str());
 
-	    SendTo(fromAddr, msg);
+	    //send to opposite default addr
+	    msg.set_val("error addr");
+	    SendTo(_addr, msg);
 	    
 	    gbCommMsgEnd(rawDataArray);
 	}

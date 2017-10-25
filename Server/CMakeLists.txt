@@ -36,6 +36,13 @@ macro(gb_add_class clsName dir)
     message("src@" ${src} " not found")
   endif()
 
+  set(src ${CMAKE_CURRENT_SOURCE_DIR}/${dir}/${clsName}.cc)
+  if(EXISTS ${src})
+    message(STATUS "src@" ${src} " added")
+    set(gb_server_srcs ${gb_server_srcs} ${src})
+  endif()
+
+  
   if(EXISTS ${header})
     message(STATUS "header@" ${header} " added")
     set(gb_server_headers ${gb_server_headers} ${header})
@@ -44,23 +51,6 @@ macro(gb_add_class clsName dir)
   endif()
   
 endmacro()
-
-macro(gb_add_allfiles_indir dir)
-  set(full_dir ${CMAKE_CURRENT_SOURCE_DIR}/${dir})
-    message("srcs:" ${srcs})
-  file(GLOB srcs ../CommMsg
-    "*.cpp"
-    "*.h"
-    "*.cc"
-    )
-  message("full_dir" ${full_dir})
-  message("srcs:" ${srcs})
-  foreach(src IN LISTS ${srcs})
-    message("src@" ${src} " added")
-  endforeach()
-  set(gb_server_srcs ${gb_server_srcs} ${srcs})
-endmacro()
-
 
 gb_add_class(gbServer .)
 gb_add_class(gbSvrNet .)
@@ -82,7 +72,7 @@ gb_add_class(gbNWMessageDispatcher .)
 gb_add_class(gbSocketData ..)
 
 # adding CommMsg
-gb_add_allfiles_indir(../CommMsg/)
+gb_add_class(gbCommMsg.pb ../CommMsg)
 
 add_executable(gbServer
   ${gb_server_srcs} ${gb_server_headers}
