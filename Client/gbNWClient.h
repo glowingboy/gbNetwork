@@ -47,7 +47,7 @@ private:
 class gbNWClient
 {
 public:
-    bool Initialize(boolconst unsigned short watchdogPort);
+    bool Initialize(const unsigned short watchdogPort);
 
     void Close();
     void Send(gb_send_pkg* sPkg);

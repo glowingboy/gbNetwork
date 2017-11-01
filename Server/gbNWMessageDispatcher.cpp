@@ -2,6 +2,8 @@
 #include "gbSvrNet.h"
 #include "gbSvrLogic.h"
 
+#include "gbReceptionistComm.h"
+
 gbNWMessageDispatcher::Msg::Msg(const gbNWMessageType type, gbSocketData* socketData, gb_array<unsigned char>* sendData):
     _type(type),
     _sendData(sendData),
@@ -50,7 +52,8 @@ void gbNWMessageDispatcher::Msg::Process(const unsigned int actorIdx)
 
 void gbNWMessageDispatcher::Msg::_connectProcess(const unsigned int actorIdx)
 {
-    
+    gbReceptionistComm* rcpComm = new gbReceptionistComm(_socketData);
+    rcpComm->Initialize();
 }
 
 void gbNWMessageDispatcher::Msg::_readProcess(const unsigned int actorIdx)

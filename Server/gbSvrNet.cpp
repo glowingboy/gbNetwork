@@ -187,49 +187,13 @@ void gbSvrNet::_ev_cb(evutil_socket_t fd, short what, void* arg)
 {
     if(what & EV_READ)
     {
+	//todo, using dedicated threads to read the data
+	//and dispatching a NEWDATA_AVAILABLE MsgType in that thread,
+	//rather than dispatch and wait for reading method
+	//further more, these threads can be shared with write operation,
+	//so can be called as dedicated IO threads
+	
 	gbNWMessageDispatcher::Instance().Dispatch(gbNWMessageType::READABLE, gbSocketDataMgr::Instance().GetSocketData(fd), nullptr);
-//	gbTCPPkgHandler::Instance().Handle(fd);
-	
-	// std::unordered_map<evutil_socket_t, gbTCPSocketData*>& mpTCPSD = gbSvrNet::Instance()._mpTCPSocketDatas;
-	// TCPSocketDataItr itr = mpTCPSD.find(fd);
-	// if(itr != mpTCPSD.end())
-	// {
-	//     gbTCPSocketData * sd = itr->second;
-	//     gbTCPRawData * rd = new gbTCPRawData;
-	//     rd->socketData = sd;
-	//     rd->data = new unsigned char[gb_TCPPKG_MAX_SIZE]{'\0'};
-	//     rd->length = recv(fd, rd->data, gb_TCPPKG_MAX_SIZE, 0);
-	//     if(rd->length != -1)
-	//     {
-	// 	gbTCPPkgHandler::Instance().Handle(rd);
-	//     }
-	//     else
-	//     {
-	// 	gbLog::Instance().Error("recv error");
-	// 	gbSAFE_DELETE(rd);
-	//     }
-//	}
-	//  else
-	//  gbLog::Instance().Error("itr nullptr");
-	
-	// sockaddr* srcSockAddr = new sockaddr;
-	// static socklen_t addrLen = sizeof(sockaddr);
-	// size_t len = recvfrom(fd, _recvBuffer, gb_UDP_MAX_PACKET_SIZE, 0, srcSockAddr, &addrLen);
-	// if(len != -1)
-	// {
-	//     unsigned char* rBuf = new unsigned char[len];
-	//     memcpy(rBuf, _recvBuffer, len);
-
-	//     gbUDPData *ud = new gbUDPData(rBuf, len, srcSockAddr, addrLen);
-
-	//     gbUDPDataHandler::Instance().Handle(ud);
-	// }
-	// else
-	// {
-	//     gbLog::Instance().Error((gbString)"recvfrom err@" + strerror(errno));
-	//     gbSAFE_DELETE(srcSockAddr);
-	// }
-
     }
     else if (what & EV_WRITE)
     {
@@ -245,21 +209,11 @@ void gbSvrNet::_listener_cb(evconnlistener* listener, evutil_socket_t sock, sock
     event_base* base = evconnlistener_get_base(listener);
     if(base != nullptr)
     {
-	
-	// std::unordered_map<evutil_socket_t, gbTCPSocketData*>& mpTCPSD = gbSvrNet::Instance()._mpTCPSocketDatas;
-	// TCPSocketDataItr itr = mpTCPSD.find(sock);
-	// if(itr == mpTCPSD.end())
-	// {
-	//     mpTCPSD.insert(std::pair<evutil_socket_t, gbTCPSocketData*>(sock, new gbTCPSocketData(sock)));
-	// }
-	// else
-	//     ;//?odd
-	
 	event* ev = event_new(base, sock, EV_READ | EV_WRITE | EV_PERSIST | EV_ET, _ev_cb, NULL);
 	event_add(ev, NULL);
 	svrNet->_lstEvs.push_back(ev);
-
 	
+	gbNWMessageDispatcher::Instance().Dispatch(gbNWMessageType::CONNECTED, gbSocketDataMgr::Instance().GetSocketData(sock), nullptr);
     }
 }
 

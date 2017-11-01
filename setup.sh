@@ -2,7 +2,13 @@
 
 if [ $EUID -ne 0 ]
 then
-    echo "need run as root"
+    echo "need run this as root"
+    exit
+fi
+
+if ! [ -f ./setup.sh ]
+then
+    echo "need run this right in dir: gbNetwork"
     exit
 fi
 
@@ -122,5 +128,41 @@ then
     rm -rfv libevent
     echo "** libevent installed **"
 fi
+
+#protobuf
+bFound=0
+if command -v protoc 1>/dev/null
+then
+    bFound=1
+fi
+
+if [ $bFound -ne 1 ]
+then
+    echo "*** protobuf not found"
+    echo "** downloading protobuf v2.6.1 **"# v2.6.1
+    echo "* downloading protobuf dependencies *"
+    printf "y\n" | apt-get install autoconf automake libtool curl make g++ unzip
+    echo "* protobuf dependencies downloaded "
+    wget https://github.com/google/protobuf/releases/download/v2.6.1/protobuf-2.6.1.tar.gz
+    echo "** protobuf v2.6.1 downloaded **"
+    tar -xzvf protobuf-2.6.1.tar.gz 
+    cd protobuf-2.6.1
+    ./autogen.sh
+    ./configure
+    make
+    make check
+    make install
+    ldconfig
+    cd ..
+    rm -rfv protobuf-2.6.1/
+    rm protobuf-2.6.1.tar.gz
+    echo "** protobuf installed **"
+else
+    echo "*** protobuf found"
+fi
+
+cd CommMsg
+protoc --cpp_out=. gbCommMsg.proto
+cd ..
 
 echo "**** dependencies checked ****"

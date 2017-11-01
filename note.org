@@ -1,0 +1,10 @@
+* downside
+ gbEventMachine(based on libevent)
+ ** generate IO events		   
+				   
+ gbIODispatcher(dedicated IO threads, based on Theron)
+ ** handle IO events, reading or writing
+ *** can also generate event for consumer, like NEW_PACKET_AVAILABLE event
+				   
+ consumers can eather query and fetch packet actively , or register a callback for packet handle
+-	

@@ -14,7 +14,7 @@ public:
 	{}
     inline virtual void Recv(const gbCommunicatorAddr fromAddr, gb_array<unsigned char>* rawDataArray) override
 	{
-	    gbCommMsgBegin(gbCommMsgString, msg, rawDataArray);
+	    gbCommMsgBegin(gbCommMsgString, msg, rawDataArray, fromAddr);
 	    std::string strMsg;
 	    msg.SerializeToString(&strMsg);
 	    

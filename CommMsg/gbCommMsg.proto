@@ -24,8 +24,8 @@ message gbCommMsgBool
 
 message gbCommMsgString_UInt32
 {
-	optional string strVal;
-	optional uint32 uint32Val;
+	optional string strVal = 1;
+	optional uint32 uint32Val = 2;
 }
 
 message gbCommMsgReceptionist

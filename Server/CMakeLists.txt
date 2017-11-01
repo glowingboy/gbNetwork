@@ -70,7 +70,7 @@ gb_add_class(gbCommunicator ..)
 gb_add_class(gbType ..)
 gb_add_class(gbNWMessageDispatcher .)
 gb_add_class(gbSocketData ..)
-
+gb_add_class(gbReceptionistComm .)
 # adding CommMsg
 gb_add_class(gbCommMsg.pb ../CommMsg)
 
