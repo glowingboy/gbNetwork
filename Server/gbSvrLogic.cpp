@@ -27,7 +27,7 @@ bool gbSvrLogic::Start()
     gbLuaCPP_dofile(_lnaState, _workPath + "../Script/LNA/gbLNA.lua");
     
 
-    gbNWMessageDispatcher::Instance().Initialize(16);
+    gbSvrIOEventDispatcher::Instance().Initialize(16);
 //    gbUDPDataHandler::Instance().Initialize(16);
     
     for(int i = 0; i < gb_SVR_LOGIC_UDP_HANDLER_ACTOR_NUM; i++)
@@ -40,6 +40,6 @@ bool gbSvrLogic::Start()
 
 void gbSvrLogic::EventHandle(const gb_socket_t socket, gbNWMessageType type)
 {
-    gbNWMessageDispatcher::Instance().Dispatch(type, gbSocketDataMgr::Instance().GetSocketData(socket), nullptr);
+    gbSvrIOEventDispatcher::Instance().Dispatch(type, gbSocketMgr::Instance().GetSocketData(socket), nullptr);
 
 }

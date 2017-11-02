@@ -9,7 +9,7 @@
 class gbDefaultComm: public gbCommunicator
 {
 public:
-    inline gbDefaultComm(gbSocketData* socketData):
+    inline gbDefaultComm(gbSocket* socketData):
 	gbCommunicator(socketData)
 	{}
     inline virtual void Recv(const gbCommunicatorAddr fromAddr, gb_array<unsigned char>* rawDataArray) override
@@ -30,5 +30,7 @@ public:
 	    
 	    gbCommMsgEnd(rawDataArray);
 	}
+    
+    gb_COMM_GETNAME_DEF(gbDefaultComm);
 
 };

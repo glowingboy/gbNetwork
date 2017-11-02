@@ -10,8 +10,6 @@
 #include <mutex>
 #define gb_SOCKETDATA_RECV_MAX_BUFFER_SIZE 512
 
-
-
 class gbSocket
 {
 public:

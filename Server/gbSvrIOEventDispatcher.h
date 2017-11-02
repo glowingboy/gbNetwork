@@ -7,6 +7,12 @@
 #include <unordered_map>
 #include "../gbSocket.h"
 
+enum gbNWMessageType
+{
+    CONNECTED = 1,
+    READABLE, WRITABLE, NEWWRITEDATA, DISCONNECTED
+};
+
 class gbSvrIOEventDispatcher
 {
     SingletonDeclare(gbSvrIOEventDispatcher);
@@ -15,19 +21,19 @@ private:
     {
     public:
 //	Msg(MsgData* data);
-	Msg(const unsigned char type, gbSocket* gb_socket, gb_array<unsigned char>* sendData);
+	Msg(const gbNWMessageType type, gbSocket* socketData, gb_array<unsigned char>* sendData);
 	Msg(const Msg & other);
 	//~Msg();
 	void Process(const unsigned int actorIdx);
 	inline void SetProcessed(){ _processed = true; }
 	inline bool IsProcessed() const {return _processed;}
-	inline gb_socket_t GetKey()const { return _gb_socket->GetSocket(); }
+	inline gb_socket_t GetKey()const { return _socketData->GetSocket(); }
     private:
 //	MsgData* _data;
 
-	const unsigned char _type;
+	const gbNWMessageType _type;
 	gb_array<unsigned char>* _sendData;
-	gbSocket* _gb_socket;
+	gbSocket* _socketData;
 
 	bool _processed;
     private:
@@ -38,7 +44,7 @@ private:
 
 public:
     void Initialize(unsigned int num);
-    void Dispatch(const unsigned char type, gbSocket* gb_socket, gb_array<unsigned char>* sendData = nullptr);
+    void Dispatch(const gbNWMessageType type, gbSocket* socketData, gb_array<unsigned char>* sendData = nullptr);
     ~gbSvrIOEventDispatcher();
 private:
     Theron::Framework* _handler;

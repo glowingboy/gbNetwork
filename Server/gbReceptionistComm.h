@@ -14,7 +14,7 @@
 class gbReceptionistComm: public gbCommunicator
 {
 public:
-    gbReceptionistComm(gbSocketData* socketData):
+    gbReceptionistComm(gbSocket* socketData):
 	gbCommunicator(socketData)
 	{}
     

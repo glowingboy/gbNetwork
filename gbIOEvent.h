@@ -10,9 +10,9 @@
 #include <mutex>
 #include <list>
 
-class gbEventMachine
+class gbIOEvent
 {
-    SingletonDeclare(gbEventMachine);
+    SingletonDeclare(gbIOEvent);
 
 public:
     bool Start(const char* szLocalIP, unsigned short port);
@@ -32,7 +32,6 @@ private:
     static void _log_callback(int severity, const char* msg);
     static void _fatal_error_callback(int err);
     static void _ev_cb(evutil_socket_t fd, short what, void* arg);
-    static void _watchdog_ev_cb(evutil_socket_t fd, short what, void* arg);
     static void _listener_cb(evconnlistener* listener, evutil_socket_t sock, sockaddr* addr, int socklen, void* ptr);
     static void _listener_error_cb(evconnlistener* listener, void* ptr);
 

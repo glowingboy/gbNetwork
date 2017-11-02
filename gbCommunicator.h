@@ -18,7 +18,7 @@ static int gbCOMM_MSG_PKG_HEADERSIZE = 2 * sizeof(gbCommunicatorAddr);
 #include <google/protobuf/message_lite.h>
 typedef ::google::protobuf::MessageLite gbCommunicatorMsg;
 
-class gbSocketData;
+class gbSocket;
 
 #include "CommMsg/gbCommMsg.pb.h"
 #include "String/gbString.h"
@@ -38,7 +38,7 @@ class gbSocketData;
 	gbSAFE_DELETE(rawDataArray)		\
 	    }
 
-#define gbCommMsg_GetName_Def(type) \
+#define gb_COMM_GETNAME_DEF(type)			\
     public:						\
     inline virtual std::string GetName() const override { return #type ; }
 
@@ -47,7 +47,7 @@ class gbSocketData;
     class gbCommunicator
     {
     public:
-	gbCommunicator(gbSocketData* socketData);
+	gbCommunicator(gbSocket* socketData);
 	inline virtual ~gbCommunicator(){}
 	//unconnected method, maybe connected method, like connect to dest first, and then just send?
 	void SendTo(const gbCommunicatorAddr dstAddr, const gbCommunicatorMsg& msg);
@@ -59,5 +59,5 @@ class gbSocketData;
 
     protected:
 	gbCommunicatorAddr _addr;//initialize with 0
-	gbSocketData* _socketData;
+	gbSocket* _socketData;
     };

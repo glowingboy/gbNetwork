@@ -1,5 +1,4 @@
-#include "gbSocket.h"
-
+#include "gbSocketData.h"
 #include "Server/gbNWMessageDispatcher.h"
 
 gbSocket::gbSocket(const gb_socket_t socket):
@@ -28,7 +27,7 @@ gbSocket::~gbSocket()
 void gbSocket::Send(gb_array<unsigned char>* msg)
 {
     //TODO need a lock here
-    gbSvrIOEventDispatcher::Instance().Dispatch(gbNWMessageType::NEWWRITEDATA, this, msg);   
+    gbNWMessageDispatcher::Instance().Dispatch(gbNWMessageType::NEWWRITEDATA, this, msg);   
 }
 
 gbCommunicatorAddr gbSocket::RegisterCommunicator(gbCommunicator* comm)

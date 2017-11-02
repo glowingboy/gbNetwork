@@ -1,6 +1,7 @@
-#include "gbEventMachine.h"
+#include "gbIOEvent.h"
+#include "gbIOEventHandler.h"
 
-bool gbEventMachine::Start(const char* szLocalIP, const unsigned short port)
+bool gbIOEvent::Start(const char* szLocalIP, const unsigned short port)
 {
 #ifdef _DEBUG
     event_enable_debug_mode();
@@ -121,7 +122,7 @@ bool gbEventMachine::Start(const char* szLocalIP, const unsigned short port)
 }
 
 
-void gbEventMachine::Shutdown()
+void gbIOEvent::Shutdown()
 {
     event_base_loopexit(_base, NULL);
     ::close(_sockfd);
@@ -136,17 +137,17 @@ void gbEventMachine::Shutdown()
     gbSAFE_DELETE(_dispathThread);
 }
 
-void gbEventMachine::_log_callback(int severity, const char* msg)
+void gbIOEvent::_log_callback(int severity, const char* msg)
 {
 	gbLog::Instance().Log(gbString("severity:") + severity + ", msg:");
 }
 
-void gbEventMachine::_fatal_error_callback(int err)
+void gbIOEvent::_fatal_error_callback(int err)
 {
 	gbLog::Instance().Error(gbString("fatal error@") + err);
 }
 
-void gbEventMachine::_ev_cb(evutil_socket_t fd, short what, void* arg)
+void gbIOEvent::_ev_cb(evutil_socket_t fd, short what, void* arg)
 {
     if(what & EV_READ)
     {
@@ -158,10 +159,10 @@ void gbEventMachine::_ev_cb(evutil_socket_t fd, short what, void* arg)
     }
 }
 
-void gbEventMachine::_listener_cb(evconnlistener* listener, evutil_socket_t sock, sockaddr* addr, int socklen, void* ptr)
+void gbIOEvent::_listener_cb(evconnlistener* listener, evutil_socket_t sock, sockaddr* addr, int socklen, void* ptr)
 {
     gbLog::Instance().Log("listener cb");
-    gbEventMachine* evMachine = reinterpret_cast<gbEventMachine*>(ptr);
+    gbIOEvent* evMachine = reinterpret_cast<gbIOEvent*>(ptr);
     
     event_base* base = evconnlistener_get_base(listener);
     if(base != nullptr)
@@ -174,7 +175,7 @@ void gbEventMachine::_listener_cb(evconnlistener* listener, evutil_socket_t sock
     }
 }
 
-void gbEventMachine::_listener_error_cb(evconnlistener* listener, void* ptr)
+void gbIOEvent::_listener_error_cb(evconnlistener* listener, void* ptr)
 {
     gbLog::Instance().Error("_listener_error_cb");
 }

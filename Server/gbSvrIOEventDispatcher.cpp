@@ -1,10 +1,13 @@
-#include "gbSvrIOEventDispatcher.h"
-#include "../gbIOEventHandler.h"
+#include "gbNWMessageDispatcher.h"
+#include "gbSvrNet.h"
+#include "gbSvrLogic.h"
 
-gbSvrIOEventDispatcher::Msg::Msg(const unsigned char type, gbSocket* gb_socket, gb_array<unsigned char>* sendData):
+#include "gbReceptionistComm.h"
+
+gbSvrIOEventDispatcher::Msg::Msg(const gbNWMessageType type, gbSocket* socketData, gb_array<unsigned char>* sendData):
     _type(type),
     _sendData(sendData),
-    _gb_socket(gb_socket),
+    _socketData(socketData),
     _processed(false)
 {
 }
@@ -12,7 +15,7 @@ gbSvrIOEventDispatcher::Msg::Msg(const unsigned char type, gbSocket* gb_socket, 
 gbSvrIOEventDispatcher::Msg::Msg(const Msg & other):
     _type(other._type),
     _sendData(other._sendData),
-    _gb_socket(other._gb_socket),
+    _socketData(other._socketData),
     _processed(other._processed)
 {
     
@@ -33,9 +36,7 @@ void gbSvrIOEventDispatcher::Msg::Process(const unsigned int actorIdx)
     //solution: optimize dispatching method(the same socket data will be dispatched to the same actor when there is a same socket already occupying an actor),
     //using gbSerializeactordispatcher, then all datas with same socket will be handled sequencially, and there is no more need lock operation
     
-//    std::lock_guard<std::mutex> lck(_data->gb_socket->GetMtx());
-    if(_type & gb_IOEVENT_READABLE)
-	_gb_socket->read();
+//    std::lock_guard<std::mutex> lck(_data->socketData->GetMtx());
     if(_type == gbNWMessageType::CONNECTED)
     {
 	_connectProcess(actorIdx);
@@ -51,18 +52,18 @@ void gbSvrIOEventDispatcher::Msg::Process(const unsigned int actorIdx)
 
 void gbSvrIOEventDispatcher::Msg::_connectProcess(const unsigned int actorIdx)
 {
-    gbReceptionistComm* rcpComm = new gbReceptionistComm(_gb_socket);
+    gbReceptionistComm* rcpComm = new gbReceptionistComm(_socketData);
     rcpComm->Initialize();
 }
 
 void gbSvrIOEventDispatcher::Msg::_readProcess(const unsigned int actorIdx)
 {
-// //    gbSocketData* gb_socket = _data->GetTCPSocketData();
-//     std::vector<unsigned char>& remainder = _gb_socket->GetRemainderData();
-//     unsigned char* buffer = _gb_socket->GetRecvBuffer();
+// //    gbSocketData* socketData = _data->GetTCPSocketData();
+//     std::vector<unsigned char>& remainder = _socketData->GetRemainderData();
+//     unsigned char* buffer = _socketData->GetRecvBuffer();
 //     unsigned int lenRcv = 0;
-//     gb_socket_t socket = _gb_socket->GetSocket();
-// //    gb_array<unsigned char>& curAppPkgData = gb_socket->GetCurAppPkgData();
+//     gb_socket_t socket = _socketData->GetSocket();
+// //    gb_array<unsigned char>& curAppPkgData = socketData->GetCurAppPkgData();
     
 //     //read all avaliable data
 //     for(;;)
@@ -90,13 +91,13 @@ void gbSvrIOEventDispatcher::Msg::_readProcess(const unsigned int actorIdx)
 // 	{
 // 	    // curAppPkgData.data = data;
 // 	    // curAppPkgData.length = len;
-// 	    // gb_socket->SetCurActorIdx(actorIdx);
-// 	    // gbAppPkg::Handle(gb_socket);
+// 	    // socketData->SetCurActorIdx(actorIdx);
+// 	    // gbAppPkg::Handle(socketData);
 // 	    if(len >= gbCOMM_MSG_PKG_HEADERSIZE)
 // 	    {
 // 		gbCommunicatorAddr* addr = (gbCommunicatorAddr*)data;
 		
-// 		gbCommunicator* comm = _gb_socket->GetCommunicator(addr[0]);
+// 		gbCommunicator* comm = _socketData->GetCommunicator(addr[0]);
 // 		if(comm != nullptr)
 // 		{
 // 		    gb_array<unsigned char>* rawDataArray = new gb_array<unsigned char>;
@@ -122,16 +123,16 @@ void gbSvrIOEventDispatcher::Msg::_readProcess(const unsigned int actorIdx)
 }
 void gbSvrIOEventDispatcher::Msg::_writeProcess(const unsigned int actorIdx)
 {
-// //    gbSocketData* gb_socket = _data->GetTCPSocketData();
-//     std::queue<gb_array<unsigned char>*>& qSendBuffer = _gb_socket->GetSendDataQueue();
+// //    gbSocketData* socketData = _data->GetTCPSocketData();
+//     std::queue<gb_array<unsigned char>*>& qSendBuffer = _socketData->GetSendDataQueue();
 //     if(_type == gbNWMessageType::WRITABLE)
-// 	_gb_socket->SetWritable(true);
+// 	_socketData->SetWritable(true);
 //     else// new writedata
 // 	qSendBuffer.push(_sendData);
 
-//     bool writable = _gb_socket->GetWritable();
+//     bool writable = _socketData->GetWritable();
 
-//     gb_socket_t socket = _gb_socket->GetSocket();
+//     gb_socket_t socket = _socketData->GetSocket();
 //     gb_array<unsigned char>* sd;
 //     unsigned int lenData;
 //     unsigned char* data;
@@ -162,7 +163,7 @@ void gbSvrIOEventDispatcher::Msg::_writeProcess(const unsigned int actorIdx)
 // 	{
 // 	    gbLog::Instance().Log("send err");
 // 	    writable = false;
-// 	    _gb_socket->SetWritable(false);
+// 	    _socketData->SetWritable(false);
 // 	}
 //     }
 }
@@ -185,20 +186,20 @@ void gbSvrIOEventDispatcher::Initialize(unsigned int num)
 }
 
 
-void gbSvrIOEventDispatcher::Dispatch(const gbNWMessageType type, gbSocket* gb_socket, gb_array<unsigned char>* sendData)
+void gbSvrIOEventDispatcher::Dispatch(const gbNWMessageType type, gbSocket* socketData, gb_array<unsigned char>* sendData)
 {
     // TCPSocketDataItr itr = _mpTCPSocketDatas.find(socket);
-    // gbSocketData* gb_socket;
+    // gbSocketData* socketData;
     // if(itr != _mpTCPSocketDatas.end())
     // {
-    // 	gb_socket = itr->second;
+    // 	socketData = itr->second;
     // }
     // else
     // {
-    // 	gb_socket = new gbSocketData(socket);
-    // 	_mpTCPSocketDatas.insert(std::pair<gb_socket_t, gbSocketData*>(socket, gb_socket));
+    // 	socketData = new gbSocketData(socket);
+    // 	_mpTCPSocketDatas.insert(std::pair<gb_socket_t, gbSocketData*>(socket, socketData));
     // }
-    // MsgData* hd = new MsgData(type, gb_socket, sendData);
+    // MsgData* hd = new MsgData(type, socketData, sendData);
     // Msg* msg = new Msg(hd);
-    _handler->Send(Msg(type, gb_socket, sendData), _rcvAddr, _dispatcherAddr);
+    _handler->Send(Msg(type, socketData, sendData), _rcvAddr, _dispatcherAddr);
 }

@@ -193,7 +193,7 @@ void gbSvrNet::_ev_cb(evutil_socket_t fd, short what, void* arg)
 	//further more, these threads can be shared with write operation,
 	//so can be called as dedicated IO threads
 	
-	gbNWMessageDispatcher::Instance().Dispatch(gbNWMessageType::READABLE, gbSocketDataMgr::Instance().GetSocketData(fd), nullptr);
+	gbSvrIOEventDispatcher::Instance().Dispatch(gbNWMessageType::READABLE, gbSocketMgr::Instance().GetSocketData(fd), nullptr);
     }
     else if (what & EV_WRITE)
     {
@@ -213,7 +213,7 @@ void gbSvrNet::_listener_cb(evconnlistener* listener, evutil_socket_t sock, sock
 	event_add(ev, NULL);
 	svrNet->_lstEvs.push_back(ev);
 	
-	gbNWMessageDispatcher::Instance().Dispatch(gbNWMessageType::CONNECTED, gbSocketDataMgr::Instance().GetSocketData(sock), nullptr);
+	gbSvrIOEventDispatcher::Instance().Dispatch(gbNWMessageType::CONNECTED, gbSocketMgr::Instance().GetSocketData(sock), nullptr);
     }
 }
 

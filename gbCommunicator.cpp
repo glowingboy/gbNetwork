@@ -2,7 +2,7 @@
 #include "gbSocketData.h"
 #include "Log/gbLog.h"
 
-gbCommunicator::gbCommunicator(gbSocketData* socketData):
+gbCommunicator::gbCommunicator(gbSocket* socketData):
     _socketData(socketData)
 {
     //register addr to socketData, and return a addr
