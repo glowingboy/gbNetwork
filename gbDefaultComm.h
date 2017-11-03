@@ -1,20 +1,18 @@
 #pragma once
 #include "gbCommunicator.h"
-#include "Log/gbLog.h"
-#include "String/gbString.h"
 #include <string>
 
-#include "CommMsg/gbCommMsg.pb.h"
+
 
 class gbDefaultComm: public gbCommunicator
 {
 public:
-    inline gbDefaultComm(gbSocket* socketData):
-	gbCommunicator(socketData)
+    inline gbDefaultComm(gbIOTunnel* ioTunnel):
+	gbCommunicator(ioTunnel)
 	{}
     inline virtual void Recv(const gbCommunicatorAddr fromAddr, gb_array<unsigned char>* rawDataArray) override
 	{
-	    gbCommMsgBegin(gbCommMsgString, msg, rawDataArray, fromAddr);
+	    gbCommMsgBegin(gbCommMsgString, msg, fromAddr, rawDataArray);
 	    std::string strMsg;
 	    msg.SerializeToString(&strMsg);
 	    

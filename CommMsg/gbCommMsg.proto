@@ -28,6 +28,12 @@ message gbCommMsgString_UInt32
 	optional uint32 uint32Val = 2;
 }
 
+message gbCommMsgString_UInt32s
+{
+	optional string strVal = 1;
+	repeated uint32 uint32Vals = 2;
+}
+
 message gbCommMsgReceptionist
 {
 	optional uint32 code = 1;

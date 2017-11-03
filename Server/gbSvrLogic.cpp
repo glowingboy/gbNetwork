@@ -2,9 +2,8 @@
 #include "Log/gbLog.h"
 #include "FileSystem/gbFileSystem.h"
 #include "Data/gbAccInfo.h"
-//#include "gbUDPDataHandler.h"
-#include "gbNWMessageDispatcher.h"
-
+#include "gbSvrIOEventDispatcher.h"
+#include "gbSvrIODataDispatcher.h"
 bool gbSvrLogic::Start()
 {
     //lua network api(LNA)
@@ -28,6 +27,7 @@ bool gbSvrLogic::Start()
     
 
     gbSvrIOEventDispatcher::Instance().Initialize(16);
+    gbSvrIODataDispatcher::Instance().Initialize(16);
 //    gbUDPDataHandler::Instance().Initialize(16);
     
     for(int i = 0; i < gb_SVR_LOGIC_UDP_HANDLER_ACTOR_NUM; i++)
@@ -36,10 +36,4 @@ bool gbSvrLogic::Start()
     }
 
     return true;
-}
-
-void gbSvrLogic::EventHandle(const gb_socket_t socket, gbNWMessageType type)
-{
-    gbSvrIOEventDispatcher::Instance().Dispatch(type, gbSocketMgr::Instance().GetSocketData(socket), nullptr);
-
 }

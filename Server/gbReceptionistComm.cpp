@@ -2,7 +2,7 @@
 
 void gbReceptionistComm::Recv(const gbCommunicatorAddr fromAddr, gb_array<unsigned char>* rawDataArray)
 {
-    gbCommMsgBegin(gbCommMsgReceptionist, msg, rawDataArray, fromAddr);
+    gbCommMsgBegin(gbCommMsgReceptionist, msg, fromAddr, rawDataArray);
 
     std::uint32_t code = msg.code();
     if(code & gb_RCPCOMM_CODE_QUERY)

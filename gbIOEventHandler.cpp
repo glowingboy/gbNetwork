@@ -1,12 +1,12 @@
 #include "gbIOEventHandler.h"
 #ifdef gb_SVR
 #include "Server/gbSvrIOEventDispatcher.h"
-#elif
+#elif gb_CLNT
 #endif
-void gbIOEventHandler::Handle(unsigned char ioEventType, gbSocket* gb_socket, gb_array<unsigned char>* sendData = nullptr)
+void gbIOEventHandler::Handle(const unsigned char ioEventType, gbIOTunnel* ioTunnel, gb_array<unsigned char>* sendData)const
 {
 #ifdef gb_SVR
-    gbSvrIOEventDispatcher::Instance().Dispatch(ioEventType, gb_socket, sendData);
+    gbSvrIOEventDispatcher::Instance().Dispatch(ioEventType, ioTunnel, sendData);
 #elif gb_CLNT
     
 #endif

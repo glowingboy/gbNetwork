@@ -1,8 +1,12 @@
-#include "gbSocket.h"
-
-#include "Server/gbNWMessageDispatcher.h"
-
-gbSocket::gbSocket(const gb_socket_t socket):
+#include "gbIOTunnel.h"
+#include "gbIOEventHandler.h"
+#ifdef gb_SVR
+#include "Server/gbSvrIODataDispatcher.h"
+#elif gb_CLNT
+#endif
+#include <sys/socket.h>
+#include "gbWatchdogComm.h"
+gbIOTunnel::gbIOTunnel(const gb_socket_t socket):
     _socket(socket),
     _recvBuffer{'\0'},
     _curCommAddr(0),
@@ -14,7 +18,7 @@ gbSocket::gbSocket(const gb_socket_t socket):
 	throw std::runtime_error("_defaultComm created error");
 }
 
-gbSocket::~gbSocket()
+gbIOTunnel::~gbIOTunnel()
 {
     // for(std::unordered_map<gbCommunicatorAddr, gbCommunicator*>::iterator i = _mpCommunicators.begin(); i != _mpCommunicators.end(); i++)
     // {
@@ -25,44 +29,26 @@ gbSocket::~gbSocket()
     gbSAFE_DELETE(_defaultComm);
 }
 
-void gbSocket::Send(gb_array<unsigned char>* msg)
+void gbIOTunnel::Send(gb_array<unsigned char>* msg)
 {
-    //TODO need a lock here
-    gbSvrIOEventDispatcher::Instance().Dispatch(gbNWMessageType::NEWWRITEDATA, this, msg);   
+    gbIOEventHandler::Instance().Handle(gb_IOEVENT_WRITABLE, this, msg);
 }
 
-gbCommunicatorAddr gbSocket::RegisterCommunicator(gbCommunicator* comm)
+gbCommunicatorAddr gbIOTunnel::RegisterCommunicator(gbCommunicator* comm)
 {
     _curCommAddr++;
     _mpCommunicators.insert(std::pair<gbCommunicatorAddr, gbCommunicator*>(_curCommAddr, comm));
     return _curCommAddr;
 }
 
-gbSocket* gbSocketMgr::GetSocketData(const gb_socket_t socket)
-{
-    std::unordered_map<gb_socket_t, gbSocket*>::iterator itr = _mpSocketDatas.find(socket);
-    if(itr != _mpSocketDatas.end())
-	return itr->second;
-    else
-    {
-	gbSocket* sd = new gbSocket(socket);
-	if(sd != nullptr)
-	{
-	    _mpSocketDatas.insert(std::pair<gb_socket_t, gbSocket*>(socket, sd));
-	}
-	return sd;
-    }
-}
-
-
-void gbSocket::_read()
+void gbIOTunnel::Read()
 {
     //read all avaliable data
     unsigned int lenRecv = 0;
     std::vector<unsigned char> recvData;
     for(;;)
     {
-	lenRecv = recv(_socket, _recvBuffer, gb_SOCKETDATA_RECV_MAX_BUFFER_SIZE, 0);
+	lenRecv = recv(_socket, _recvBuffer, gb_IOTUNNEL_RECV_BUFFER_SIZE, 0);
 	if( lenRecv == -1)
 	{
 	    gbLog::Instance().Error("recv error");
@@ -70,7 +56,7 @@ void gbSocket::_read()
 	}
 	recvData.insert(recvData.end(), _recvBuffer, _recvBuffer + lenRecv);
 
-	if( lenRecv < gb_SOCKETDATA_RECV_MAX_BUFFER_SIZE)
+	if( lenRecv < gb_IOTUNNEL_RECV_BUFFER_SIZE)
 	{
 	    break;
 	}
@@ -85,13 +71,13 @@ void gbSocket::_read()
 	}
 
 	//dispatch new recv data event, need a lock again
-	
+#ifdef gb_SVR
+	gbSvrIODataDispatcher::Instance().Dispatch(this);
+#elif gb_CLNT
+#endif
     }
-
-
-
 }
-void gbSocket::_write(gb_array<unsigned char>* sendData)
+void gbIOTunnel::Write(gb_array<unsigned char>* sendData)
 {
     if(sendData != nullptr)
     {
@@ -138,7 +124,7 @@ void gbSocket::_write(gb_array<unsigned char>* sendData)
 }
 
 
-void gbSocket::_processRecvData()
+void gbIOTunnel::ProcessRecvData()
 {
     bool bQRDEmpty = false;
     
@@ -194,5 +180,64 @@ void gbSocket::_processRecvData()
 		break;
 	}
 	_remainderData.erase(_remainderData.begin(), _remainderData.end() - lenData);
+    }
+}
+
+gbClientIOTunnel::gbClientIOTunnel(const char* szIP, const short port):
+    gbIOTunnel(socket(AF_INET, SOCK_STREAM | SOCK_NONBLOCK, 0))
+{
+    if(_socket == -1)
+    {
+	gbLog::Instance().Error("gbClientiotunnel _socket == -1");
+	throw std::runtime_error("gbClientiotunnel _socket == -1");
+    }
+    
+    //connect through a delegate tunnel(watchdog clnt tunnel)
+    gbWatchdogClntIOTunnel* ioTunnel = gbIOTunnelMgr::Instance().GetWatchdogClntIOTunnel();
+    gbCommMsgString_UInt32s msg;
+    msg.set_strval(szIP);
+    msg.add_uint32s();
+    std::uint32_t* socket = msg.mutable_uint32s(1);
+    msg.add_uint32s();
+    std::uint32_t* port = msg.mutable_uint32s(2);
+    *socket = _socket;
+    *port = port;
+    gbCommunicator* comm = ioTunnel->GetWatchdogComm();
+    comm->SendTo(comm->GetAddr(), msg);
+}
+
+gbWatchdogIOTunnel::gbWatchdogIOTunnel(const gb_socket_t socket):
+    gbIOTunnel(socket)
+{
+    _watchdogComm = new gbWatchdogComm(this);
+    if(_watchdogComm == nullptr)
+	throw std::runtime_error("_watchdogComm == nullptr");
+}
+
+gbIOTunnel* gbIOTunnelMgr::GetIOTunnel(const gb_socket_t connectedSocket)
+{
+    std::unordered_map<gb_socket_t, gbIOTunnel*>::iterator itr = _mpIOTunnels.find(connectedSocket);
+    if(itr != _mpIOTunnels.end())
+	return itr->second;
+    else
+    {
+	gbIOTunnel* tunnel = new gbIOTunnel(connectedSocket);
+	if(tunnel != nullptr)
+	{
+	    _mpIOTunnels.insert(std::pair<gb_socket_t, gbIOTunnel*>(connectedSocket, tunnel));
+	}
+	return tunnel;
+    }
+}
+
+
+gbWatchdogIOTunnel* gbIOTunnelMgr::GetWatchdogIOTunnel(const gb_socket_t connectedSocket)
+{
+    if(_watchdogIOTunnel != nullptr)
+	return _watchdogIOTunnel;
+    else
+    {
+	_watchdogIOTunnel = new gbWatchdogIOTunnel(connectedSocket);
+	return _watchdogIOTunnel;
     }
 }

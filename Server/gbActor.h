@@ -36,8 +36,8 @@ private:
 private:
     void _handler(const MsgType & msg, const Theron::Address from)
 	{
-	    (const_cast<MsgType&>(msg))->Process(_idx);
-	    (const_cast<MsgType&>(msg))->SetProcessed();
+	    (const_cast<MsgType&>(msg)).Process(_idx);
+	    (const_cast<MsgType&>(msg)).SetProcessed();
 	    Send(msg, from);
 	}
 };
@@ -74,7 +74,7 @@ private:
 private:
     void _handler(const MsgType & msg, const Theron::Address from)
 	{
-	    if(msg->IsProcessed())
+	    if(msg.IsProcessed())
 	    {
 		_freeWorker.push(from);
 	    }
@@ -135,9 +135,9 @@ private:
 private:
     void _handler(const MsgType & msg, const Theron::Address from)
 	{
-	    if(msg->IsProcessed())
+	    if(msg.IsProcessed())
 	    {
-		typename std::unordered_map<MsgKey, gbRefCountAddress*>::iterator itr = _mpBusyWorker.find(msg->GetKey());
+		typename std::unordered_map<MsgKey, gbRefCountAddress*>::iterator itr = _mpBusyWorker.find(msg.GetKey());
 		if(itr != _mpBusyWorker.end())
 		{
 		    gbRefCountAddress * addr = itr->second;
@@ -159,7 +159,7 @@ private:
 	    while(!_msgs.empty())
 	    {
 		const MsgType& front = _msgs.front();
-		typename std::unordered_map<MsgKey, gbRefCountAddress*>::iterator itr = _mpBusyWorker.find(front->GetKey());
+		typename std::unordered_map<MsgKey, gbRefCountAddress*>::iterator itr = _mpBusyWorker.find(front.GetKey());
 		if(itr != _mpBusyWorker.end())
 		{
 		    gbRefCountAddress* addr = itr->second;
@@ -174,7 +174,7 @@ private:
 			Theron::Address tAddr = _freeWorker.front();
 			Send(front, tAddr);
 			gbRefCountAddress * addr = new gbRefCountAddress(tAddr);
-			_mpBusyWorker.insert(std::pair<MsgKey, gbRefCountAddress*>(front->GetKey(),addr));
+			_mpBusyWorker.insert(std::pair<MsgKey, gbRefCountAddress*>(front.GetKey(),addr));
 			_msgs.pop();
 			_freeWorker.pop();
 		    }

@@ -1,9 +1,6 @@
 #pragma once
 #include "gbType.h"
 
-
-
-
 typedef unsigned int gbCommunicatorAddr;
 typedef unsigned char gbMessageType;
 
@@ -18,11 +15,12 @@ static int gbCOMM_MSG_PKG_HEADERSIZE = 2 * sizeof(gbCommunicatorAddr);
 #include <google/protobuf/message_lite.h>
 typedef ::google::protobuf::MessageLite gbCommunicatorMsg;
 
-class gbSocket;
+class gbIOTunnel;
 
 #include "CommMsg/gbCommMsg.pb.h"
+#include "Log/gbLog.h"
 #include "String/gbString.h"
-#define gbCommMsgBegin(MsgType, var, rawDataArray, fromAddr)		\
+#define gbCommMsgBegin(MsgType, var, fromAddr, rawDataArray)		\
     {									\
 	MsgType var;							\
 	if(!var.ParseFromArray(rawDataArray->data, rawDataArray->length)) \
@@ -47,7 +45,7 @@ class gbSocket;
     class gbCommunicator
     {
     public:
-	gbCommunicator(gbSocket* socketData);
+	gbCommunicator(gbIOTunnel* ioTunnel);
 	inline virtual ~gbCommunicator(){}
 	//unconnected method, maybe connected method, like connect to dest first, and then just send?
 	void SendTo(const gbCommunicatorAddr dstAddr, const gbCommunicatorMsg& msg);
@@ -59,5 +57,5 @@ class gbSocket;
 
     protected:
 	gbCommunicatorAddr _addr;//initialize with 0
-	gbSocket* _socketData;
+	gbIOTunnel* _ioTunnel;
     };

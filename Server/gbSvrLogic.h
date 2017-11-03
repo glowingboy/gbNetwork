@@ -6,12 +6,6 @@
 #include "../gbType.h"
 
 #define gb_SVR_LOGIC_UDP_HANDLER_ACTOR_NUM 16
-#include "gbNWMessageDispatcher.h"
-enum gbSocketEventType
-{
-    NewConnection = 1,
-    Read, Write
-};
 
 class gbSvrLogic
 {
@@ -25,7 +19,6 @@ if(idx < gb_SVR_LOGIC_UDP_HANDLER_ACTOR_NUM)
 else
     return nullptr;
 }
-void EventHandle(const gb_socket_t socket, gbNWMessageType type);
 private:
 gbString _workPath;
 

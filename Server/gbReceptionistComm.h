@@ -14,12 +14,12 @@
 class gbReceptionistComm: public gbCommunicator
 {
 public:
-    gbReceptionistComm(gbSocket* socketData):
-	gbCommunicator(socketData)
+    gbReceptionistComm(gbIOTunnel* ioTunnel):
+	gbCommunicator(ioTunnel)
 	{}
     
     virtual void Recv(const gbCommunicatorAddr fromAddr, gb_array<unsigned char>* rawDataArray) override;
-    gbCommMsg_GetName_Def(gbReceptionistComm);
+    gb_COMM_GETNAME_DEF(gbReceptionistComm);
     
     void Initialize();
 private:
