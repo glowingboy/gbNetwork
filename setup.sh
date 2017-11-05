@@ -122,6 +122,9 @@ then
     git checkout gbRelease-2.1.8
     mkdir build
     cd build
+    echo "* downloading libevent dependencies *"
+    printf "y\n" | apt-get install libssl-dev
+    echo "* libevent dependencies downloaded *"
     rm -rfv ./* && cmake -DCMAKE_BUILD_TYPE=Debug .. && cmake --build . --target install
     rm -rfv ./* && cmake -DCMAKE_BUILD_TYPE=Release .. && cmake --build . --target install
     cd ../../
