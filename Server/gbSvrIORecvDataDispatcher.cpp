@@ -1,19 +1,19 @@
-#include "gbSvrIODataDispatcher.h"
+#include "gbSvrIORecvDataDispatcher.h"
 
 
-void gbSvrIODataDispatcher::Msg::Process(const unsigned int actorIdx)
+void gbSvrIORecvDataDispatcher::Msg::Process(const unsigned int actorIdx)
 {
     _ioTunnel->ProcessRecvData();
 }
 
 
-gbSvrIODataDispatcher::~gbSvrIODataDispatcher()
+gbSvrIORecvDataDispatcher::~gbSvrIORecvDataDispatcher()
 {
     gbSAFE_DELETE(_framework);
     gbSAFE_DELETE(_dispatcher);
 }
 
-void gbSvrIODataDispatcher::Initialize(unsigned int num)
+void gbSvrIORecvDataDispatcher::Initialize(unsigned int num)
 {
     _framework = new Theron::Framework;
 
@@ -24,7 +24,7 @@ void gbSvrIODataDispatcher::Initialize(unsigned int num)
 }
 
 
-void gbSvrIODataDispatcher::Dispatch(gbIOTunnel* ioTunnel)
+void gbSvrIORecvDataDispatcher::Dispatch(gbIOTunnel* ioTunnel)
 {
     std::lock_guard<std::mutex> lck(_mtx);
     _framework->Send(Msg(ioTunnel), _rcvAddr, _dispatcherAddr);

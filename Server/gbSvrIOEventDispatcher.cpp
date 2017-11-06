@@ -1,6 +1,5 @@
 #include "gbSvrIOEventDispatcher.h"
 #include "../gbIOEventHandler.h"
-#include "gbReceptionistComm.h"
 
 gbSvrIOEventDispatcher::Msg::Msg(const unsigned char type, gbIOTunnel* ioTunnel, gb_array<unsigned char>* sendData):
     _type(type),
@@ -37,7 +36,7 @@ void gbSvrIOEventDispatcher::Msg::Process(const unsigned int actorIdx)
 //    std::lock_guard<std::mutex> lck(_data->gb_socket->GetMtx());
 
     if(_type & gb_IOEVENT_READABLE)
-	_ioTunnel->Read();
+	_ioTunnel->ReadAndProcess();
     else if( _type & gb_IOEVENT_WRITABLE)
     {
 	_ioTunnel->Write(_sendData);

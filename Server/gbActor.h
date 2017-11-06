@@ -144,6 +144,8 @@ private:
 		    addr->refCount--;
 		    if(addr->refCount == 0)
 		    {
+			delete addr;
+			addr = nullptr;
 			_mpBusyWorker.erase(itr);
 			_freeWorker.push(addr->addr);
 		    }

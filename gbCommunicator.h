@@ -7,7 +7,10 @@ typedef unsigned char gbMessageType;
 /**
    gbCommunicator msg pkg memory layout
 
-   |1st HEADER{1st: dst addr|2nd: src addr}|2nd: MSG|
+   |1st: HEADER{1st: dst addr|2nd: src addr}|2nd: MSG|
+
+   tcp pkg memory layout
+   |1st: HEADER{length(body)}|2nd: BODY|
 */
 
 static int gbCOMM_MSG_PKG_HEADERSIZE = 2 * sizeof(gbCommunicatorAddr);

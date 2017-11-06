@@ -37,6 +37,7 @@ public:
     //can be used to check if connected in Client
     inline bool IsWritable() const { return _bWritable; }
     void Read();
+    void ReadAndProcess();
     //@param sendData, if sendData is nullptr, then there must be a new WRITABLE event generated.
     void Write(gb_array<unsigned char>* sendData);
 
@@ -80,6 +81,7 @@ class gbWatchdogIOTunnel:public gbIOTunnel
     friend class gbIOTunnelMgr;
 private:
     gbWatchdogIOTunnel(const gb_socket_t socket);
+public:
     inline gbCommunicator* GetWatchdogComm() { return _watchdogComm; }
 private:
     gbCommunicator* _watchdogComm;
@@ -125,10 +127,10 @@ public:
 	}
 private:
     std::unordered_map<gb_socket_t, gbIOTunnel*> _mpIOTunnels;
-    gbWatchdogClntIOTunnel* _watchdogClntIOTunnel;
+    gbWatchdogIOTunnel* _watchdogClntIOTunnel;
 
     //not added to _mpIOtunnels
-    gbWatchdogClntIOTunnel* _watchdogSvrIOTunnel;
+    gbWatchdogIOTunnel* _watchdogSvrIOTunnel;
 };
 
 

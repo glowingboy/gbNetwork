@@ -12,21 +12,20 @@ public:
 	{}
     inline virtual void Recv(const gbCommunicatorAddr fromAddr, gb_array<unsigned char>* rawDataArray) override
 	{
-	    gbCommMsgBegin(gbCommMsgString, msg, fromAddr, rawDataArray);
-	    std::string strMsg;
-	    msg.SerializeToString(&strMsg);
+	    gbLog::Instance().Error(gbString("********unkonw communicator addr********\n") +
+				    "addr: " + fromAddr + "\n"
+				    "rawDataArray length: " +  rawDataArray->length+ "\n"
+				    "rawDataArray as string: \n"
+				    "{"+ (char*)rawDataArray->data + "}\n"
+				    "****************");
 	    
-// 	    gbLog::Instance().Error(gbString("********unkonw addr********\n
-// addr: " + fromAddr + "\n
-// msg byte size: ") + msg.ByteSize() + "\n
-// msg as string: \n
-// " + strMsg.c_str());
-
+	    gbSAFE_DELETE(rawDataArray);
+#ifdef gb_SVR
 	    //send to opposite default addr
+	    gbCommMsgString msg;
 	    msg.set_val("error addr");
 	    SendTo(_addr, msg);
-	    
-	    gbCommMsgEnd(rawDataArray);
+#endif
 	}
     
     gb_COMM_GETNAME_DEF(gbDefaultComm);

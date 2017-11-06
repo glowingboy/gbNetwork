@@ -37,7 +37,7 @@ struct gb_array
 	{
 	    gbSAFE_DELETE_ARRAY(data);
 	    data = new T[len];
-	    memcpy(_data, data, len);
+	    memcpy(data, _data, len);
 	    length = len;
 	}
     T* data;

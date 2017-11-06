@@ -3,7 +3,7 @@
 #include "FileSystem/gbFileSystem.h"
 #include "Data/gbAccInfo.h"
 #include "gbSvrIOEventDispatcher.h"
-#include "gbSvrIODataDispatcher.h"
+#include "gbSvrIORecvDataDispatcher.h"
 bool gbSvrLogic::Start()
 {
     //lua network api(LNA)
@@ -27,7 +27,7 @@ bool gbSvrLogic::Start()
     
 
     gbSvrIOEventDispatcher::Instance().Initialize(16);
-    gbSvrIODataDispatcher::Instance().Initialize(16);
+    gbSvrIORecvDataDispatcher::Instance().Initialize(16);
 //    gbUDPDataHandler::Instance().Initialize(16);
     
     for(int i = 0; i < gb_SVR_LOGIC_UDP_HANDLER_ACTOR_NUM; i++)

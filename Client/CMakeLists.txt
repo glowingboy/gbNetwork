@@ -4,7 +4,7 @@ if(NOT CMAKE_BUILD_TYPE)
   set(CMAKE_BUILD_TYPE "Debug")
 endif()
 
-set(CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS} "-std=c++11")
+set(CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS} "-std=c++11 -Dgb_CLNT=1")
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/../CMake/")
 
@@ -33,6 +33,13 @@ macro(gb_add_class clsName dir)
     message("src@" ${src} " not found")
   endif()
 
+  set(src ${CMAKE_CURRENT_SOURCE_DIR}/${dir}/${clsName}.cc)
+  if(EXISTS ${src})
+    message(STATUS "src@" ${src} " added")
+    set(gb_srcs ${gb_srcs} ${src})
+  endif()
+
+  
   if(EXISTS ${header})
     message(STATUS "header@" ${header} " added")
     set(gb_headers ${gb_headers} ${header})
@@ -43,10 +50,20 @@ macro(gb_add_class clsName dir)
 endmacro()
 
 # gb_add_class(gbClientCore Core)
-gb_add_class(gbNWClient .)
+# gb_add_class(gbNWClient .)
 # gb_add_class(gbUDPData ..)
 # gb_add_class(gbAppPkg ..)
 # gb_add_class(gbByteOrderAmend ..)
+
+gb_add_class(gbIOEvent ..)
+gb_add_class(gbIOEventHandler ..)
+gb_add_class(gbClntIORecvDataHandler .)
+gb_add_class(gbClntIOEventHandler .)
+gb_add_class(gbIOTunnel ..)
+gb_add_class(gbCommunicator ..)
+gb_add_class(gbCommMsg.pb ../CommMsg)
+gb_add_class(gbReceptionistComm ..)
+gb_add_class(gbWatchdogComm ..)
 
 gb_add_class(test .)
 
@@ -84,4 +101,5 @@ target_link_libraries(gbClient
   dl
   ${ws2_32_lib}
   ${pthread_lib}
+  protobuf-lite
   )

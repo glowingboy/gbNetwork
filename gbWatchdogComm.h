@@ -12,4 +12,5 @@ public:
 	{}
 
     virtual void Recv(const gbCommunicatorAddr fromAddr, gb_array<unsigned char>* rawDataArray) override;
+    gb_COMM_GETNAME_DEF(gbWatchdogComm);
 };

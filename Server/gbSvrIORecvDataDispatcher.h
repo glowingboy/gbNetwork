@@ -4,7 +4,7 @@
 #include "gbActor.h"
 #include <mutex>
 #include "../gbIOTunnel.h"
-class gbSvrIODataDispatcher
+class gbSvrIORecvDataDispatcher
 {
 private:
     class Msg
@@ -24,11 +24,11 @@ private:
 	gbIOTunnel* _ioTunnel;
 	bool _processed;
     };
-    SingletonDeclare(gbSvrIODataDispatcher);
+    SingletonDeclare(gbSvrIORecvDataDispatcher);
 public:
     void Initialize(unsigned int num);
     void Dispatch(gbIOTunnel* ioTunnel);
-    ~gbSvrIODataDispatcher();
+    ~gbSvrIORecvDataDispatcher();
 
 private:
     Theron::Framework* _framework;

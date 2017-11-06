@@ -75,7 +75,7 @@ bool gbIOEvent::Start(const char* szLocalIP, const unsigned short port)
     	return false;
     }
 
-    _listener = evconnlistener_new(_base,_listener_cb, this, LEV_OPT_CLOSE_ON_FREE, -1, _watchdogSvrSocketFd);
+    _listener = evconnlistener_new(_base,_watchdog_listener_cb, this, LEV_OPT_CLOSE_ON_FREE, -1, _watchdogSvrSocketFd);
     evconnlistener_set_error_cb(_listener, _listener_error_cb);
 
     //watchdog client
@@ -85,8 +85,9 @@ bool gbIOEvent::Start(const char* szLocalIP, const unsigned short port)
 	gbLog::Instance().Error(gbString("watchdogClntSockFd create err@") + strerror(errno));
 	return false;
     }
-    gbWatchdogIOTunnel* ioTunnel = new gbWatchdogIOTunnel(watchdogClntSocketFd);
-    gbIOTunnelMgr::Instance().AddIOTunnel(ioTunnel);
+    gbWatchdogIOTunnel* clntIOTunnel = new gbWatchdogIOTunnel(watchdogClntSocketFd);
+    gbIOTunnelMgr::Instance().SetWatchdogClntIOTunnel(clntIOTunnel);
+//    gbIOTunnelMgr::Instance().AddIOTunnel(ioTunnel);
 
     Connect(watchdogClntSocketFd, "127.0.0.1", port);
     // event* ev = event_new(_base, watchdogClntSocketFd, EV_READ | EV_WRITE | EV_PERSIST | EV_ET, _ev_cb, NULL);
@@ -154,7 +155,8 @@ void gbIOEvent::Connect(evutil_socket_t socket, const char* IP, unsigned short p
     
     if(connect(socket, (sockaddr*)&svrAddr, sizeof(svrAddr)) == -1)
     {
-	gbLog::Instance().Error(gbString("gbIOEvent::Connect connect err@") + strerror(errno));
+	if(errno != EINPROGRESS)
+	    gbLog::Instance().Error(gbString("gbIOEvent::Connect connect err@") + strerror(errno));
     }
 }
 void gbIOEvent::Shutdown()
@@ -219,13 +221,13 @@ void gbIOEvent::_watchdog_ev_cb(evutil_socket_t fd, short what, void* arg)
     //read(internal affairs) need be handled in IOEvent thread, but not for write
     if(what & EV_READ)
     {
-	gbIOTunnel* tunnel = gbIOTunnelMgr::Instance().GetIOTunnel(fd);
+	gbIOTunnel* tunnel = gbIOTunnelMgr::Instance().GetWatchdogSvrIOTunnel(fd);
 	tunnel->Read();
 	tunnel->ProcessRecvData();
     }
     else if( what & EV_WRITE)
     {
-	gbIOEventHandler::Instance().Handle(gb_IOEVENT_WRITABLE, gbIOTunnelMgr::Instance().GetIOTunnel(fd), nullptr);
+	gbIOEventHandler::Instance().Handle(gb_IOEVENT_WRITABLE, gbIOTunnelMgr::Instance().GetWatchdogSvrIOTunnel(fd), nullptr);
 	gbLog::Instance().Log("EV_WRITE");
     }
 }
