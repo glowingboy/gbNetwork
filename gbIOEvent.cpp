@@ -1,7 +1,36 @@
 #include "gbIOEvent.h"
 #include "gbIOEventHandler.h"
-#include "gbIOTunnel.h"
+
 #include <arpa/inet.h>
+#include "gbWatchdogComm.h"
+gbIOEvent::~gbIOEvent()
+{
+    gbWatchdogIOTunnel* watchdog = _ioTunnelMgr.GetWatchdogClntIOTunnel();
+
+    
+    gbCommMsgString_UInt32s msg;
+    msg.add_uint32vals(gb_WATCHDOGCOMM_CODE_SHUTDOWN);
+    gbCommunicator* comm = watchdog->GetWatchdogComm();
+    comm->SendTo(comm->GetAddr(), msg);
+
+    _dispatchThread->join();
+
+    gbSAFE_DELETE(_dispatchThread);
+
+    for(std::list<event*>::iterator i = _lstEvs.begin(); i != _lstEvs.end(); i++)
+    {
+	event_free(*i);
+    }
+
+    if(_listener != nullptr)
+	evconnlistener_free(_listener);
+    evconnlistener_free(_watchdogListener);
+
+    event_base_free(_base);
+
+
+    
+}
 bool gbIOEvent::Start(const char* szLocalIP, const unsigned short port)
 {
 #ifdef _DEBUG
@@ -74,9 +103,9 @@ bool gbIOEvent::Start(const char* szLocalIP, const unsigned short port)
     	gbLog::Instance().Error(gbString("bind err@") + strerror(errno));
     	return false;
     }
-
-    _listener = evconnlistener_new(_base,_watchdog_listener_cb, this, LEV_OPT_CLOSE_ON_FREE, -1, _watchdogSvrSocketFd);
-    evconnlistener_set_error_cb(_listener, _listener_error_cb);
+    
+    _watchdogListener = evconnlistener_new(_base,_watchdog_listener_cb, this, LEV_OPT_CLOSE_ON_FREE, -1, _watchdogSvrSocketFd);
+    evconnlistener_set_error_cb(_watchdogListener, _listener_error_cb);
 
     //watchdog client
     evutil_socket_t watchdogClntSocketFd = socket(AF_INET, SOCK_STREAM | SOCK_NONBLOCK, 0);
@@ -86,7 +115,7 @@ bool gbIOEvent::Start(const char* szLocalIP, const unsigned short port)
 	return false;
     }
     gbWatchdogIOTunnel* clntIOTunnel = new gbWatchdogIOTunnel(watchdogClntSocketFd);
-    gbIOTunnelMgr::Instance().SetWatchdogClntIOTunnel(clntIOTunnel);
+    _ioTunnelMgr.SetWatchdogClntIOTunnel(clntIOTunnel);
 //    gbIOTunnelMgr::Instance().AddIOTunnel(ioTunnel);
 
     Connect(watchdogClntSocketFd, "127.0.0.1", port);
@@ -103,6 +132,7 @@ bool gbIOEvent::Start(const char* szLocalIP, const unsigned short port)
     
 
     //main svr
+    _listener = nullptr;
     if(szLocalIP != nullptr)
     {
 	_svrSocketFd = socket(AF_INET, SOCK_STREAM | SOCK_NONBLOCK, 0);
@@ -149,7 +179,7 @@ void gbIOEvent::Connect(evutil_socket_t socket, const char* IP, unsigned short p
 	gbLog::Instance().Error("gbIOEvent::Connect socket == -1");
 	return;
     }
-    event* ev = event_new(_base, socket, EV_READ | EV_WRITE | EV_PERSIST | EV_ET, _ev_cb, NULL);
+    event* ev = event_new(_base, socket, EV_READ | EV_WRITE | EV_PERSIST | EV_ET, _ev_cb, this);
     event_add(ev, NULL);
     _lstEvs.push_back(ev);
     
@@ -168,10 +198,10 @@ void gbIOEvent::Shutdown()
 //    ::close(_watchdogSockfd);
 //    event_free(_watchdogEv);
     
-    event_base_free(_base);
 
-    _dispatchThread->join();
-    gbSAFE_DELETE(_dispatchThread);
+
+//    _dispatchThread->join();   
+
 }
 
 void gbIOEvent::_log_callback(int severity, const char* msg)
@@ -186,13 +216,14 @@ void gbIOEvent::_fatal_error_callback(int err)
 
 void gbIOEvent::_ev_cb(evutil_socket_t fd, short what, void* arg)
 {
+    gbIOEvent* ioEV = reinterpret_cast<gbIOEvent*>(arg);    
     if(what & EV_READ)
     {
-	gbIOEventHandler::Instance().Handle(gb_IOEVENT_READABLE, gbIOTunnelMgr::Instance().GetIOTunnel(fd), nullptr);
+	ioEV->_ioEventHandler.Handle(gb_IOEVENT_READABLE, ioEV->_ioTunnelMgr.GetIOTunnel(fd), nullptr);
     }
     else if (what & EV_WRITE)
     {
-	gbIOEventHandler::Instance().Handle(gb_IOEVENT_WRITABLE, gbIOTunnelMgr::Instance().GetIOTunnel(fd), nullptr);
+	ioEV->_ioEventHandler.Handle(gb_IOEVENT_WRITABLE, ioEV->_ioTunnelMgr.GetIOTunnel(fd), nullptr);
 	gbLog::Instance().Log("EV_WRITE");
     }
 }
@@ -205,7 +236,7 @@ void gbIOEvent::_listener_cb(evconnlistener* listener, evutil_socket_t sock, soc
     event_base* base = evconnlistener_get_base(listener);
     if(base != nullptr)
     {
-	event* ev = event_new(base, sock, EV_READ | EV_WRITE | EV_PERSIST | EV_ET, _ev_cb, NULL);
+	event* ev = event_new(base, sock, EV_READ | EV_WRITE | EV_PERSIST | EV_ET, _ev_cb, ioEV);
 	event_add(ev, NULL);
 	ioEV->_lstEvs.push_back(ev);
     }
@@ -219,15 +250,16 @@ void gbIOEvent::_listener_error_cb(evconnlistener* listener, void* ptr)
 void gbIOEvent::_watchdog_ev_cb(evutil_socket_t fd, short what, void* arg)
 {
     //read(internal affairs) need be handled in IOEvent thread, but not for write
+    gbIOEvent* ioEV = reinterpret_cast<gbIOEvent*>(arg);
     if(what & EV_READ)
     {
-	gbIOTunnel* tunnel = gbIOTunnelMgr::Instance().GetWatchdogSvrIOTunnel(fd);
+	gbIOTunnel* tunnel = ioEV->_ioTunnelMgr.GetWatchdogSvrIOTunnel(fd);
 	tunnel->Read();
 	tunnel->ProcessRecvData();
     }
     else if( what & EV_WRITE)
     {
-	gbIOEventHandler::Instance().Handle(gb_IOEVENT_WRITABLE, gbIOTunnelMgr::Instance().GetWatchdogSvrIOTunnel(fd), nullptr);
+	ioEV->_ioEventHandler.Handle(gb_IOEVENT_WRITABLE, ioEV->_ioTunnelMgr.GetWatchdogSvrIOTunnel(fd), nullptr);
 	gbLog::Instance().Log("EV_WRITE");
     }
 }
@@ -239,7 +271,7 @@ void gbIOEvent::_watchdog_listener_cb(evconnlistener* listener, evutil_socket_t 
     event_base* base = evconnlistener_get_base(listener);
     if(base != nullptr)
     {
-	event* ev = event_new(base, sock, EV_READ | EV_WRITE | EV_PERSIST | EV_ET, _watchdog_ev_cb, NULL);
+	event* ev = event_new(base, sock, EV_READ | EV_WRITE | EV_PERSIST | EV_ET, _watchdog_ev_cb, ioEV);
 	event_add(ev, NULL);
 	ioEV->_lstEvs.push_back(ev);
     }

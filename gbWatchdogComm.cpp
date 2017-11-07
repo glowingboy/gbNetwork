@@ -18,7 +18,7 @@ void gbWatchdogComm::Recv(const gbCommunicatorAddr fromAddr, gb_array<unsigned c
 	    std::uint32_t code = msg.uint32vals(0);
 	    if(code & gb_WATCHDOGCOMM_CODE_SHUTDOWN)
 	    {
-//		gbIOEvent::Instance().Shutdown();
+		gbIOEvent::Instance().Shutdown();
 	    }
 	}
 	else

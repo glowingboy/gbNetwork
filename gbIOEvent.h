@@ -10,14 +10,28 @@
 #include <mutex>
 #include <list>
 
+#include "gbIOTunnel.h"
+#include "gbIOEventHandler.h"
+
 class gbIOEvent
 {
     SingletonDeclare(gbIOEvent);
-
+    ~gbIOEvent();
 public:
     //@param szLocalIP, if szLocalIP == nullptr, then it should only listen loopback interface
     bool Start(const char* szLocalIP, unsigned short port);
 
+
+    //should be called in the same thread as IOEvent
+    void Connect(evutil_socket_t socket, const char* IP, unsigned short port);
+
+    gbIOTunnelMgr& GetIOTunnelMgr(){ return _ioTunnelMgr; }
+    gbIOEventHandler& GetIOEventHandler(){ return _ioEventHandler;}
+    void Shutdown();
+private:
+    gbIOTunnelMgr _ioTunnelMgr;
+    gbIOEventHandler _ioEventHandler;
+    
     evutil_socket_t _svrSocketFd;
     //only watch loopback interface connection
     evutil_socket_t _watchdogSvrSocketFd;//todo
@@ -25,13 +39,12 @@ public:
     std::list<event*> _lstEvs;
     event_base* _base;
     evconnlistener* _listener;
+    evconnlistener* _watchdogListener;
     std::thread* _dispatchThread;
 
-    //should be called in the same thread as IOEvent
-    void Connect(evutil_socket_t socket, const char* IP, unsigned short port);
 private:
 
-    void Shutdown();
+
     
     static void _log_callback(int severity, const char* msg);
     static void _fatal_error_callback(int err);

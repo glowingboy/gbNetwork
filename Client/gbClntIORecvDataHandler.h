@@ -6,9 +6,10 @@
 #include <condition_variable>
 
 class gbIOTunnel;
+class gbIOEventHandler;
 class gbClntIORecvDataHandler
 {
-    SingletonDeclare_ExcludeDfnCnstrctor(gbClntIORecvDataHandler);
+    friend class gbIOEventHandler;
     inline gbClntIORecvDataHandler():
 	_rdp_thread(_recvDataProcesse_thread),
 	_bStopThread(false)

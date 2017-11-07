@@ -1,5 +1,5 @@
 #include "gbClntIORecvDataHandler.h"
-#include "../gbIOTunnel.h"
+#include "../gbIOEvent.h"
 void gbClntIORecvDataHandler::Handle(gbIOTunnel* ioTunnel)
 {
     if(ioTunnel != nullptr)
@@ -27,12 +27,13 @@ gbClntIORecvDataHandler::~gbClntIORecvDataHandler()
 
 void gbClntIORecvDataHandler::_recvDataProcesse_thread()
 {
-    std::queue<gbIOTunnel*>& q = gbClntIORecvDataHandler::Instance()._qRecvDataTunnels;
-    std::condition_variable& cv = gbClntIORecvDataHandler::Instance()._cv;
-    std::unique_lock<std::mutex> lck(gbClntIORecvDataHandler::Instance()._mtx);
+    gbClntIORecvDataHandler& handler = gbIOEvent::Instance().GetIOEventHandler().GetClntIORecvDataHandler();
+    std::queue<gbIOTunnel*>& q = handler._qRecvDataTunnels;
+    std::condition_variable& cv = handler._cv;
+    std::unique_lock<std::mutex> lck(handler._mtx);
 
     gbIOTunnel* ioTunnel = q.front();
-    bool&  bStop = gbClntIORecvDataHandler::Instance()._bStopThread;
+    bool&  bStop = handler._bStopThread;
     for(;;)
     {
 	cv.wait(lck, [&]()->bool

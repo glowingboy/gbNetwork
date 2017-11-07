@@ -1,5 +1,6 @@
 #include "gbIOTunnel.h"
-#include "gbIOEventHandler.h"
+//#include "gbIOEventHandler.h"
+#include "gbIOEvent.h"
 #ifdef gb_SVR
 #include "Server/gbSvrIORecvDataDispatcher.h"
 #elif gb_CLNT
@@ -35,7 +36,7 @@ gbIOTunnel::~gbIOTunnel()
 
 void gbIOTunnel::Send(gb_array<unsigned char>* msg)
 {
-    gbIOEventHandler::Instance().Handle(gb_IOEVENT_WRITABLE, this, msg);
+    gbIOEvent::Instance().GetIOEventHandler().Handle(gb_IOEVENT_WRITABLE, this, msg);
 }
 
 gbCommunicatorAddr gbIOTunnel::RegisterCommunicator(gbCommunicator* comm)
@@ -55,7 +56,7 @@ void gbIOTunnel::Read()
 	lenRecv = recv(_socket, _recvBuffer, gb_IOTUNNEL_RECV_BUFFER_SIZE, 0);
 	if( lenRecv == -1)
 	{
-	    gbLog::Instance().Error("recv error");
+	    gbLog::Instance().Error(gbString("recv error: ") + strerror(errno));
 	    return ;
 	}
 	recvData.insert(recvData.end(), _recvBuffer, _recvBuffer + lenRecv);
@@ -80,9 +81,9 @@ void gbIOTunnel::ReadAndProcess()
 {
     Read();
 #ifdef gb_SVR
-    gbSvrIORecvDataDispatcher::Instance().Dispatch(this);
+    gbIOEvent::Instance().GetIOEventHandler().GetSvrIORecvDataDispatcher().Dispatch(this);
 #elif gb_CLNT
-    gbClntIORecvDataHandler::Instance().Handle(this);
+    gbIOEvent::Instance().GetIOEventHandler().GetClntIORecvDataHandler().Handle(this);
 #endif
     
 }
@@ -111,9 +112,13 @@ void gbIOTunnel::Write(gb_array<unsigned char>* sendData)
 	//send until lenData == 0, else error happenned
 	while(lenData != 0)
 	{
-	    sentLen = send(_socket, data, lenData, 0);
+	    sentLen = send(_socket, data, lenData, MSG_NOSIGNAL);//MSG_NOSIGNAL, no SIGPIPE raised
 	    if(sentLen == -1)
-		break;
+	    {
+		gbLog::Instance().Error(gbString("send error: ") + strerror(errno));
+		break;		
+	    }
+
 	    lenData = lenData - sentLen;
 	    data = data + sentLen;
 	}
@@ -135,8 +140,6 @@ void gbIOTunnel::Write(gb_array<unsigned char>* sendData)
 
 void gbIOTunnel::ProcessRecvData()
 {
-    static unsigned char test = 0;//TODO, remove
-   test ++;
     bool bQRDEmpty = false;
     
     {
@@ -190,6 +193,8 @@ void gbIOTunnel::ProcessRecvData()
 	    
 		data = data + len;
 		lenData = lenData - len;
+		if(lenData == 0)
+		    break;
 	    }
 	    else
 		break;
@@ -197,7 +202,6 @@ void gbIOTunnel::ProcessRecvData()
 
 	_remainderData.erase(_remainderData.begin(), _remainderData.end() - lenData);
     }
-    test--;
 }
 
 gbClientIOTunnel::gbClientIOTunnel(const char* szIP, const short port):
@@ -209,10 +213,11 @@ gbClientIOTunnel::gbClientIOTunnel(const char* szIP, const short port):
 	throw std::runtime_error("gbClientiotunnel _socket == -1");
     }
 
-    gbIOTunnelMgr::Instance().AddIOTunnel(this);
+    gbIOTunnelMgr& tunnelMgr = gbIOEvent::Instance().GetIOTunnelMgr();
+    tunnelMgr.AddIOTunnel(this);
     
     //connect through a delegate tunnel(watchdog clnt tunnel)
-    gbWatchdogIOTunnel* ioTunnel = gbIOTunnelMgr::Instance().GetWatchdogClntIOTunnel();
+    gbWatchdogIOTunnel* ioTunnel = tunnelMgr.GetWatchdogClntIOTunnel();
     gbCommMsgString_UInt32s msg;
     msg.set_strval(szIP);
     msg.add_uint32vals(_socket);
@@ -234,6 +239,11 @@ gbWatchdogIOTunnel::gbWatchdogIOTunnel(const gb_socket_t socket):
 	throw std::runtime_error("_watchdogComm == nullptr");
 }
 
+gbClientIOTunnel* gbIOTunnelMgr::GetClntIOTunnel(const char* szIP, const short port)
+{
+    gbClientIOTunnel* tunnel = new gbClientIOTunnel(szIP, port);
+    return tunnel;
+}
 gbIOTunnel* gbIOTunnelMgr::GetIOTunnel(const gb_socket_t connectedSocket)
 {
     std::unordered_map<gb_socket_t, gbIOTunnel*>::iterator itr = _mpIOTunnels.find(connectedSocket);

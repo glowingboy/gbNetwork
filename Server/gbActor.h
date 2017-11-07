@@ -4,6 +4,7 @@
 #include <queue>
 #include <unordered_map>
 
+#include "Log/gbLog.h"
 // class gbActorMsg
 // {
 //     friend class gbActor;
@@ -98,7 +99,7 @@ struct gbRefCountAddress
 	refCount(1),
 	addr(Addr)
 	{}
-    unsigned int refCount;
+    std::uint64_t refCount;
     Theron::Address addr;
 };
 //for some msg needed be handled sequencially
@@ -144,14 +145,14 @@ private:
 		    addr->refCount--;
 		    if(addr->refCount == 0)
 		    {
-			delete addr;
-			addr = nullptr;
 			_mpBusyWorker.erase(itr);
 			_freeWorker.push(addr->addr);
+			delete addr;
+			addr = nullptr;
 		    }
 		}
 		else
-		    ;//err
+		    gbLog::Instance().Error("impossible error, possible due to msg._processed not initialized with false");//err
 	    }
 	    else
 	    {
@@ -166,6 +167,8 @@ private:
 		{
 		    gbRefCountAddress* addr = itr->second;
 		    Send(front, addr->addr);
+
+		    //reach max uint64?
 		    addr->refCount++;
 		    _msgs.pop();
 		}

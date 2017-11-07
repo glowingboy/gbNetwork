@@ -4,17 +4,21 @@
 #include "gbActor.h"
 #include <mutex>
 #include "../gbIOTunnel.h"
+class gbIOEventHandler;
 class gbSvrIORecvDataDispatcher
 {
+    friend class gbIOEventHandler;
 private:
     class Msg
     {
     public:
 	inline Msg(gbIOTunnel* ioTunnel):
-	    _ioTunnel(ioTunnel)
+	    _ioTunnel(ioTunnel),
+	    _processed(false)
 	    {}
 	inline Msg(const Msg& other):
-	    _ioTunnel(other._ioTunnel)
+	    _ioTunnel(other._ioTunnel),
+	    _processed(other._processed)
 	    {}
 	void Process(const unsigned int actorIdx);
 	inline void SetProcessed() { _processed = true; }
@@ -24,11 +28,16 @@ private:
 	gbIOTunnel* _ioTunnel;
 	bool _processed;
     };
-    SingletonDeclare(gbSvrIORecvDataDispatcher);
+//    SingletonDeclare(gbSvrIORecvDataDispatcher);
+    inline gbSvrIORecvDataDispatcher(){}
 public:
     void Initialize(unsigned int num);
     void Dispatch(gbIOTunnel* ioTunnel);
-    ~gbSvrIORecvDataDispatcher();
+    inline ~gbSvrIORecvDataDispatcher()
+	{
+	    gbSAFE_DELETE(_dispatcher);
+	    gbSAFE_DELETE(_framework);
+	}
 
 private:
     Theron::Framework* _framework;

@@ -6,9 +6,12 @@
 #include <unordered_map>
 #include "../gbIOTunnel.h"
 #include <mutex>
+class gbIOEventHandler;
 class gbSvrIOEventDispatcher
 {
-    SingletonDeclare(gbSvrIOEventDispatcher);
+//    SingletonDeclare(gbSvrIOEventDispatcher);
+    friend class gbIOEventHandler;
+    inline gbSvrIOEventDispatcher(){}
 private:
     class Msg
     {
@@ -36,9 +39,14 @@ private:
     };
 
 public:
+
     void Initialize(unsigned int num);
     void Dispatch(const unsigned char type, gbIOTunnel* ioTunnel, gb_array<unsigned char>* sendData = nullptr);
-    ~gbSvrIOEventDispatcher();
+    inline ~gbSvrIOEventDispatcher()
+	{
+	    gbSAFE_DELETE(_dispatcher);
+	    gbSAFE_DELETE(_framework);
+	}
 private:
     Theron::Framework* _framework;
     gbSerializeActorDispatcher<Msg, gb_socket_t>* _dispatcher;

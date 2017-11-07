@@ -7,9 +7,11 @@
 #include <condition_variable>
 #include "../gbType.h"
 class gbIOTunnel;
+class gbIOEventHandler;
 class gbClntIOEventHandler
 {
-    SingletonDeclare_ExcludeDfnCnstrctor(gbClntIOEventHandler);
+    friend class gbIOEventHandler;
+//    SingletonDeclare_ExcludeDfnCnstrctor(gbClntIOEventHandler);
     inline gbClntIOEventHandler():
 	_rw_thread(_read_write_thread),
 	_bStopThread(false)

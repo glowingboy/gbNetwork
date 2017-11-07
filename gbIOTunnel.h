@@ -18,7 +18,7 @@ class gbIOTunnel
     friend class gbIOTunnelMgr;
 protected:
     gbIOTunnel(const gb_socket_t socket);
-    ~gbIOTunnel();
+    virtual ~gbIOTunnel();
 public:
     gbCommunicatorAddr RegisterCommunicator(gbCommunicator* comm);
     inline gbCommunicator* GetCommunicator(const gbCommunicatorAddr addr)
@@ -68,10 +68,9 @@ protected:
 class gbClientIOTunnel: public gbIOTunnel
 {
     friend class gbIOTunnelMgr;
-public:
-    gbClientIOTunnel(const char* szIP, const short port);
-private:
 
+private:
+    gbClientIOTunnel(const char* szIP, const short port);
 };
 
 class gbIOEvent;
@@ -81,6 +80,10 @@ class gbWatchdogIOTunnel:public gbIOTunnel
     friend class gbIOTunnelMgr;
 private:
     gbWatchdogIOTunnel(const gb_socket_t socket);
+    inline virtual ~gbWatchdogIOTunnel() override
+	{
+	    gbSAFE_DELETE(_watchdogComm);
+	}
 public:
     inline gbCommunicator* GetWatchdogComm() { return _watchdogComm; }
 private:
@@ -89,12 +92,29 @@ private:
 
 class gbIOTunnelMgr
 {
-    SingletonDeclare_ExcludeDfnCnstrctor(gbIOTunnelMgr);
+//    SingletonDeclare_ExcludeDfnCnstrctor(gbIOTunnelMgr);
+    friend class gbIOEvent;
 private:
     inline gbIOTunnelMgr():
 	_watchdogSvrIOTunnel(nullptr)
 	{}
+    inline ~gbIOTunnelMgr()
+	{
+	    gbSAFE_DELETE(_watchdogSvrIOTunnel);
+
+	    for(std::unordered_map<gb_socket_t, gbIOTunnel*>::iterator i =  _mpIOTunnels.begin();
+		i != _mpIOTunnels.end();
+		i ++)
+	    {
+		gbSAFE_DELETE(i->second);
+	    }
+		
+	}
+
 public:
+
+    gbClientIOTunnel* GetClntIOTunnel(const char* szIP, const short port);
+    
     //@param socket, must have been connected, if no corresponding tunnel exists, then create one
     gbIOTunnel* GetIOTunnel(const gb_socket_t connectedSocket);
     inline void AddIOTunnel(gbIOTunnel* ioTunnel)

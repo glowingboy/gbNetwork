@@ -1,6 +1,7 @@
 #include "gbClntIOEventHandler.h"
-#include "../gbIOEventHandler.h"
-#include "../gbIOTunnel.h"
+// #include "../gbIOEventHandler.h"
+// #include "../gbIOTunnel.h"
+#include "../gbIOEvent.h"
 void gbClntIOEventHandler::Handle(const unsigned char type, gbIOTunnel* ioTunnel, gb_array<unsigned char>* sendData)
 {
     if(type & gb_IOEVENT_READABLE)
@@ -37,17 +38,18 @@ gbClntIOEventHandler::~gbClntIOEventHandler()
 
 void gbClntIOEventHandler::_read_write_thread()
 {
-    std::queue<gbIOTunnel*>& qR = gbClntIOEventHandler::Instance()._qReadableIOTunnels;
-    std::queue<SendData>& qW = gbClntIOEventHandler::Instance()._qWritableIOTunnels;
+    gbClntIOEventHandler& handler = gbIOEvent::Instance().GetIOEventHandler().GetClntIOEventHandler();
+    std::queue<gbIOTunnel*>& qR = handler._qReadableIOTunnels;
+    std::queue<SendData>& qW = handler._qWritableIOTunnels;
 
-    std::condition_variable& cv = gbClntIOEventHandler::Instance()._qRWIOTCV;
-    std::unique_lock<std::mutex> lck(gbClntIOEventHandler::Instance()._qRWIOTMtx);
+    std::condition_variable& cv = handler._qRWIOTCV;
+    std::unique_lock<std::mutex> lck(handler._qRWIOTMtx);
     bool bReadable = false;
     bool bWritable = false;
     gbIOTunnel* rTunnel;
     SendData wTunnel;
 
-    bool& bStop = gbClntIOEventHandler::Instance()._bStopThread;
+    bool& bStop = handler._bStopThread;
     for(;;)
     {
 	cv.wait(lck, [&]()->bool

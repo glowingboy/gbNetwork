@@ -6,13 +6,6 @@ void gbSvrIORecvDataDispatcher::Msg::Process(const unsigned int actorIdx)
     _ioTunnel->ProcessRecvData();
 }
 
-
-gbSvrIORecvDataDispatcher::~gbSvrIORecvDataDispatcher()
-{
-    gbSAFE_DELETE(_framework);
-    gbSAFE_DELETE(_dispatcher);
-}
-
 void gbSvrIORecvDataDispatcher::Initialize(unsigned int num)
 {
     _framework = new Theron::Framework;
