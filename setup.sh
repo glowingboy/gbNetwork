@@ -47,7 +47,7 @@ function fs_get_dependency()
 {
     echo "** downloading $1 **"
     rm -rfv $1
-    $usr_name git clone $fs_git_repo_addr$1.git
+    git clone $fs_git_repo_addr$1.git
     echo "** $1 downloaded **"
     echo "** installing $1 **"
     cd $1
@@ -86,7 +86,7 @@ if [ $? -ne 1 ]
 then
     echo "** downloading Theron **"
     rm -rfv Theron
-    $usr_name git clone "$fs_git_repo_addr"Theron.git
+    git clone "$fs_git_repo_addr"Theron.git
     echo "** Theron downloaded **"
     echo "** installing Theron **"
     cd Theron
@@ -115,7 +115,7 @@ if [ $bFound -ne 1 ]
 then
     echo "** downloading libevent **"
     rm -rfv libevent
-    $usr_name git clone "$fs_git_repo_addr"libevent.git
+    git clone "$fs_git_repo_addr"libevent.git
     echo "** libevent downloaded **"
     echo "** installing libevent **"
     cd libevent

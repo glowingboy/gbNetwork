@@ -1,12 +1,9 @@
 cmake_minimum_required(VERSION 3.0)
+include(../gbCMake/gbCommon.cmake)
 
-if(NOT CMAKE_BUILD_TYPE)
-  set(CMAKE_BUILD_TYPE "Debug")
-endif()
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Dgb_CLNT=1")
 
-set(CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS} "-std=c++11 -Dgb_CLNT=1")
-
-set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/../CMake/")
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/../gbCMake/")
 
 find_package(libevent REQUIRED)
 include_directories(SYSTEM ${libevent_INCLUDE_DIRS})
@@ -20,57 +17,24 @@ include_directories(SYSTEM ${lua_INCLUDE_DIRS})
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 
 set(gb_srcs)
-set(gb_headers)
 
-macro(gb_add_class clsName dir)
-  set(src ${CMAKE_CURRENT_SOURCE_DIR}/${dir}/${clsName}.cpp)
-  set(header ${CMAKE_CURRENT_SOURCE_DIR}/${dir}/${clsName}.h)
+gb_add_class(gbIOEvent .. gb_srcs)
+gb_add_class(gbIOEventHandler .. gb_srcs)
+gb_add_class(gbClntIORecvDataHandler . gb_srcs)
+gb_add_class(gbClntIOEventHandler . gb_srcs)
+gb_add_class(gbIOTunnel .. gb_srcs)
+gb_add_class(gbCommunicator .. gb_srcs)
+gb_add_class(gbReceptionistComm .. gb_srcs)
+gb_add_class(gbWatchdogComm .. gb_srcs)
 
-  if(EXISTS ${src})
-    message(STATUS "src@" ${src} " added")
-    set(gb_srcs ${gb_srcs} ${src})
-  else()
-    message("src@" ${src} " not found")
-  endif()
+gb_add_class(test . gb_srcs)
 
-  set(src ${CMAKE_CURRENT_SOURCE_DIR}/${dir}/${clsName}.cc)
-  if(EXISTS ${src})
-    message(STATUS "src@" ${src} " added")
-    set(gb_srcs ${gb_srcs} ${src})
-  endif()
-
-  
-  if(EXISTS ${header})
-    message(STATUS "header@" ${header} " added")
-    set(gb_headers ${gb_headers} ${header})
-  else()
-    message("header@" ${header} " not found")
-  endif()
-  
-endmacro()
-
-# gb_add_class(gbClientCore Core)
-# gb_add_class(gbNWClient .)
-# gb_add_class(gbUDPData ..)
-# gb_add_class(gbAppPkg ..)
-# gb_add_class(gbByteOrderAmend ..)
-
-gb_add_class(gbIOEvent ..)
-gb_add_class(gbIOEventHandler ..)
-gb_add_class(gbClntIORecvDataHandler .)
-gb_add_class(gbClntIOEventHandler .)
-gb_add_class(gbIOTunnel ..)
-gb_add_class(gbCommunicator ..)
-gb_add_class(gbCommMsg.pb ../CommMsg)
-gb_add_class(gbReceptionistComm ..)
-gb_add_class(gbWatchdogComm ..)
-
-gb_add_class(test .)
-
+set(gb_srcs ${gb_srcs}
+  ${CMAKE_CURRENT_SOURCE_DIR}/../CommMsg/gbCommMsg.pb.cc
+  )
 
 add_executable(gbClient
   ${gb_srcs}
-  ${gb_headers}
   )
 
 # add_library(gbClient

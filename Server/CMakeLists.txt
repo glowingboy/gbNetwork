@@ -1,12 +1,9 @@
 cmake_minimum_required(VERSION 3.0)
+include(../gbCMake/gbCommon.cmake)
 
-if(NOT CMAKE_BUILD_TYPE)
-  set(CMAKE_BUILD_TYPE "Debug")
-endif()
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DTHERON_CPP11=1 -Dgb_SVR=1")
 
-set(CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS} "-std=c++11 -DTHERON_CPP11=1 -Dgb_SVR=1")
-
-set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/../CMake/")
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/../gbCMake/")
 
 find_package(libevent REQUIRED)
 include_directories(SYSTEM ${libevent_INCLUDE_DIRS})
@@ -23,56 +20,32 @@ include_directories(SYSTEM ${libtheron_INCLUDE_DIRS})
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 
 set(gb_server_srcs)
-set(gb_server_headers)
 
-macro(gb_add_class clsName dir)
-  set(src ${CMAKE_CURRENT_SOURCE_DIR}/${dir}/${clsName}.cpp)
-  set(header ${CMAKE_CURRENT_SOURCE_DIR}/${dir}/${clsName}.h)
-
-  if(EXISTS ${src})
-    message(STATUS "src@" ${src} " added")
-    set(gb_server_srcs ${gb_server_srcs} ${src})
-  else()
-    message("src@" ${src} " not found")
-  endif()
-
-  set(src ${CMAKE_CURRENT_SOURCE_DIR}/${dir}/${clsName}.cc)
-  if(EXISTS ${src})
-    message(STATUS "src@" ${src} " added")
-    set(gb_server_srcs ${gb_server_srcs} ${src})
-  endif()
-
-  
-  if(EXISTS ${header})
-    message(STATUS "header@" ${header} " added")
-    set(gb_server_headers ${gb_server_headers} ${header})
-  else()
-    message("header@" ${header} " not found")
-  endif()
-  
-endmacro()
-
-gb_add_class(gbServer .)
+gb_add_class(gbServer . gb_server_srcs)
 # gb_add_class(gbSvrNet .)
 # gb_add_class(gbSvrUsr Core)
-gb_add_class(gbActor .)
-gb_add_class(gbAccInfo Data)
-gb_add_class(gbSvrLogic .)
+gb_add_class(gbActor . gb_server_srcs)
+gb_add_class(gbAccInfo Data gb_server_srcs)
+gb_add_class(gbSvrLogic . gb_server_srcs)
 
-gb_add_class(gbType ..)
-gb_add_class(gbIOEvent ..)
-gb_add_class(gbIOEventHandler ..)
-gb_add_class(gbIOTunnel ..)
-gb_add_class(gbSvrIOEventDispatcher .)
-gb_add_class(gbSvrIORecvDataDispatcher .)
-gb_add_class(gbCommunicator ..)
-gb_add_class(gbReceptionistComm ..)
-gb_add_class(gbWatchdogComm ..)
+gb_add_class(gbType .. gb_server_srcs)
+gb_add_class(gbIOEvent .. gb_server_srcs)
+gb_add_class(gbIOEventHandler .. gb_server_srcs) 
+gb_add_class(gbIOTunnel .. gb_server_srcs)
+gb_add_class(gbSvrIOEventDispatcher . gb_server_srcs)
+gb_add_class(gbSvrIORecvDataDispatcher . gb_server_srcs)
+gb_add_class(gbCommunicator .. gb_server_srcs)
+gb_add_class(gbReceptionistComm .. gb_server_srcs)
+gb_add_class(gbWatchdogComm .. gb_server_srcs)
+
 # adding CommMsg
-gb_add_class(gbCommMsg.pb ../CommMsg)
+set(gb_server_srcs ${gb_server_srcs}
+  ${CMAKE_CURRENT_SOURCE_DIR}/../CommMsg/gbCommMsg.pb.cc
+  )
+
 
 add_executable(gbServer
-  ${gb_server_srcs} ${gb_server_headers}
+  ${gb_server_srcs}
   )
 
 set(ws2_32_lib)
