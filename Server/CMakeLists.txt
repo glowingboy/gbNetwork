@@ -6,13 +6,13 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DTHERON_CPP11=1 -Dgb_SVR=1")
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/../gbCMake/")
 
 find_package(libevent REQUIRED)
-include_directories(SYSTEM ${libevent_INCLUDE_DIRS})
+# include_directories(SYSTEM ${libevent_INCLUDE_DIRS})
 
 find_package(lua REQUIRED)
-include_directories(SYSTEM ${lua_INCLUDE_DIRS})
+# include_directories(SYSTEM ${lua_INCLUDE_DIRS})
 
 find_package(gbUtils REQUIRED)
-include_directories(SYSTEM ${gbUtils_INCLUDE_DIRS})
+# include_directories(SYSTEM ${gbUtils_INCLUDE_DIRS})
 
 find_package(libtheron REQUIRED)
 include_directories(SYSTEM ${libtheron_INCLUDE_DIRS})
@@ -56,16 +56,6 @@ endif()
 set(pthread_lib)
 if(UNIX)
   set(pthread_lib "pthread")
-endif()
-
-if(NOT gbUtils_LIBRARIES_d)
-  message(WARNING "gbUtilsd not found")
-  set(gbUtils_LIBRARIES_d ${gbUtils_LIBRARIES})
-endif()
-
-if(NOT libtheron_LIBRARIES_d)
-  message(WARNING "libtherond not found")
-  set(libtheron_LIBRARIES_d ${libtheron_LIBRARIES})
 endif()
 
 target_link_libraries(gbServer

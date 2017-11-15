@@ -4,7 +4,7 @@
 #include <queue>
 #include <unordered_map>
 
-#include "Log/gbLog.h"
+#include "gbUtils/include/gbLog.h"
 // class gbActorMsg
 // {
 //     friend class gbActor;

@@ -1,5 +1,5 @@
 #pragma once
-#include "gbCommon.h"
+#include "gbUtils/include/gbCommon.h"
 #include <cstring>
 #ifdef _MSC_VER
 #define gb_socket_t intptr_t

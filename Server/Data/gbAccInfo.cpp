@@ -1,6 +1,6 @@
 #include "gbAccInfo.h"
-#include "Log/gbLog.h"
-#include "String/gbString.h"
+#include "gbUtils/include/gbLog.h"
+#include "gbUtils/include/gbString.h"
 void gbAccInfo::gb_LC_Reg(lua_State *L)
 {
     gb_LC_Func_Def;

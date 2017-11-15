@@ -52,11 +52,6 @@ if(UNIX)
   set(pthread_lib "pthread")
 endif()
 
-if(NOT gbUtils_LIBRARIES_d)
-  message(WARNING "gbUtilsd not found")
-  set(gbUtils_LIBRARIES_d ${gbUtils_LIBRARIES})
-endif()
-
 target_link_libraries(gbClient
   ${libevent_LIBRARIES}
   debug ${gbUtils_LIBRARIES_d}

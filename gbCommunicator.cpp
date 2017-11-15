@@ -1,6 +1,6 @@
 #include "gbCommunicator.h"
 #include "gbIOTunnel.h"
-#include "Log/gbLog.h"
+#include "gbUtils/include/gbLog.h"
 
 gbCommunicator::gbCommunicator(gbIOTunnel* ioTunnel):
     _ioTunnel(ioTunnel)

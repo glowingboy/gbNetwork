@@ -1,6 +1,6 @@
 #pragma once
 
-#include "gbCommon.h"
+#include "gbUtils/include/gbCommon.h"
 #include "gbType.h"
 
 #ifdef gb_SVR

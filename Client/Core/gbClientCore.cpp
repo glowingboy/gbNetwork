@@ -1,6 +1,6 @@
 #include "gbClientCore.h"
 
-#include "String/gbString.h"
+#include "gbUtils/include/gbString.h"
 #ifdef _MSC_VER
 #include<Windows.h>
 #endif
@@ -9,7 +9,7 @@
 #include <arpa/inet.h>
 #endif
 
-#include "Log/gbLog.h"
+#include "gbUtils/include/gbLog.h"
 
 bool gbClientCore::_is_little_endian;
 std::mutex gbClientCore::_sendPkgMutex;

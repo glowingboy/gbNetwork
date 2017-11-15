@@ -1,9 +1,9 @@
 #pragma once
-#include "gbCommon.h"
+#include "gbUtils/include/gbCommon.h"
 #include <string>
 #include <unordered_map>
 #include <mutex>
-#include "LuaCPP/gbLuaCPP.h"
+#include "gbUtils/include/gbLuaCPP.h"
 class gbAccInfo
 {
 public:

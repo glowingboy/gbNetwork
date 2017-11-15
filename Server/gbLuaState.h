@@ -1,6 +1,6 @@
 #pragma once
-#include "gbCommon.h"
-#include "LuaCPP/gbLuaCPP.h"
+#include "gbUtils/include/gbCommon.h"
+#include "gbUtils/include/gbLuaCPP.h"
 class gbLuaState
 {
     

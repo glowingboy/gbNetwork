@@ -3,11 +3,11 @@
 #include "event.h"
 #include "event2/listener.h"
 #include "event2/thread.h"
-#include "gbCommon.h"
+#include "gbUtils/include/gbCommon.h"
 #include <thread>
-#include "LuaCPP/gbLuaCPP.h"
+#include "gbUtils/include/gbLuaCPP.h"
 #include "../../gbUDPData.h"
-#include "String/gbString.h"
+#include "gbUtils/include/gbString.h"
 class gbSvrCore
 {
 public:

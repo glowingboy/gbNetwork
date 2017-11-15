@@ -21,8 +21,8 @@ typedef ::google::protobuf::MessageLite gbCommunicatorMsg;
 class gbIOTunnel;
 
 #include "CommMsg/gbCommMsg.pb.h"
-#include "Log/gbLog.h"
-#include "String/gbString.h"
+#include "gbUtils/include/gbLog.h"
+#include "gbUtils/include/gbString.h"
 #define gbCommMsgBegin(MsgType, var, fromAddr, rawDataArray)		\
     {									\
 	MsgType var;							\

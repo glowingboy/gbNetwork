@@ -1,7 +1,7 @@
 #pragma once
-#include "gbCommon.h"
-#include "LuaCPP/gbLuaCPP.h"
-#include <String/gbString.h>
+#include "gbUtils/include/gbCommon.h"
+#include "gbUtils/include/gbLuaCPP.h"
+#include <gbUtils/include/gbString.h>
 
 #include "../gbType.h"
 

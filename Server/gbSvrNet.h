@@ -3,9 +3,9 @@
 #include "event.h"
 #include "event2/listener.h"
 #include "event2/thread.h"
-#include "gbCommon.h"
-#include "Log/gbLog.h"
-#include "String/gbString.h"
+#include "gbUtils/include/gbCommon.h"
+#include "gbUtils/include/gbLog.h"
+#include "gbUtils/include/gbString.h"
 //#include "gbUDPDataHandler.h"
 #include <thread>
 #include <mutex>

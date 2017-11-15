@@ -1,6 +1,6 @@
 #include "gbSvrLogic.h"
-#include "Log/gbLog.h"
-#include "FileSystem/gbFileSystem.h"
+#include "gbUtils/include/gbLog.h"
+#include "gbUtils/include/gbFileSystem.h"
 #include "Data/gbAccInfo.h"
 #include "gbSvrIOEventDispatcher.h"
 #include "gbSvrIORecvDataDispatcher.h"

@@ -2,8 +2,8 @@
 #include <sys/socket.h>
 #include <arpa/inet.h>
 #include <unistd.h>
-#include "Log/gbLog.h"
-#include "String/gbString.h"
+#include "gbUtils/include/gbLog.h"
+#include "gbUtils/include/gbString.h"
 
 bool gbBaseClient::Initialize()
 {

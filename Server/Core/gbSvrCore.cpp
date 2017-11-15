@@ -5,13 +5,13 @@
 #endif
 
 
-#include "Log/gbLog.h"
-#include "String/gbString.h"
+#include "gbUtils/include/gbLog.h"
+#include "gbUtils/include/gbString.h"
 #include "ThreadPool/gbThreadPool.h"
 
 #include "gbSvrLogicLoop.h"
-#include "LuaCPP/gbLuaCPP.h"
-#include "FileSystem/gbFileSystem.h"
+#include "gbUtils/include/gbLuaCPP.h"
+#include "gbUtils/include/gbFileSystem.h"
 #include "../gbLuaState.h"
 event_base* gbSvrCore::_base;
 evconnlistener* gbSvrCore::_listener;

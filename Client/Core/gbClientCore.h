@@ -5,7 +5,7 @@
 #include <queue>
 #include "event.h"
 #include "event2/thread.h"
-#include "gbCommon.h"
+#include "gbUtils/include/gbCommon.h"
 #include <string.h>
 #include "../gbUDPData.h"
 

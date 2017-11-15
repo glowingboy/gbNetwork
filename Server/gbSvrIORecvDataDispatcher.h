@@ -1,6 +1,6 @@
 #pragma once
 
-#include "gbCommon.h"
+#include "gbUtils/include/gbCommon.h"
 #include "gbActor.h"
 #include <mutex>
 #include "../gbIOTunnel.h"
